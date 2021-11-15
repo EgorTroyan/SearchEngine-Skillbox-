@@ -1,5 +1,4 @@
 package com.egortroyan.searchengine;
-
 import com.egortroyan.searchengine.models.Field;
 import com.egortroyan.searchengine.models.Indexing;
 import com.egortroyan.searchengine.models.Lemma;
@@ -19,6 +18,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,7 @@ public class SiteIndexing {
     IndexRepository indexRepository;
 
 
-    @EventListener(ApplicationReadyEvent.class)
+    @PostConstruct
     public void runAfterStartup() {
         fieldInit();
         SiteMapBuilder builder = new SiteMapBuilder(searchUrl);
@@ -155,7 +156,7 @@ public class SiteIndexing {
         }
     }
 
-    public boolean isIsReady() {
+    public boolean isSiteIndexingReady() {
         return isReady;
     }
 }
