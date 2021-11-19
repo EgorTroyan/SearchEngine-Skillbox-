@@ -56,7 +56,7 @@ public class ParseUrl extends RecursiveTask<String> {
                 }
             }
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            /*Пропускаем сайт не удовлетворяющий условиям*/;
         }
         return result.toString();
     }

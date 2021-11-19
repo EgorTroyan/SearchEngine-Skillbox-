@@ -8,33 +8,35 @@ public class Indexing {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
-    private int page_id;
-    private int lemma_id;
+    @Column(name = "page_id")
+    private int pageId;
+    @Column(name = "lemma_id")
+    private int lemmaId;
     private float ranking;
 
     public Indexing() {
     }
 
-    public Indexing(int page_id, int lemma_id, float ranking) {
-        this.page_id = page_id;
-        this.lemma_id = lemma_id;
+    public Indexing(int pageId, int lemmaId, float ranking) {
+        this.pageId = pageId;
+        this.lemmaId = lemmaId;
         this.ranking = ranking;
     }
 
-    public int getPage_id() {
-        return page_id;
+    public int getPageId() {
+        return pageId;
     }
 
-    public void setPage_id(int page_id) {
-        this.page_id = page_id;
+    public void setPageId(int pageId) {
+        this.pageId = pageId;
     }
 
-    public int getLemma_id() {
-        return lemma_id;
+    public int getLemmaId() {
+        return lemmaId;
     }
 
-    public void setLemma_id(int lemma_id) {
-        this.lemma_id = lemma_id;
+    public void setLemmaId(int lemmaId) {
+        this.lemmaId = lemmaId;
     }
 
     public float getRank() {

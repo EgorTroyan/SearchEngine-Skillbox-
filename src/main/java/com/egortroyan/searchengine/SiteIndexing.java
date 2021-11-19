@@ -11,6 +11,7 @@ import com.egortroyan.searchengine.repo.PageRepository;
 import com.egortroyan.searchengine.sitemap.SiteMapBuilder;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
+import org.jsoup.UnsupportedMimeTypeException;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
@@ -26,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-@Component
+@Service
 public class SiteIndexing {
     private boolean isReady = false;
     @Value("${searchUrl}")
@@ -41,7 +43,7 @@ public class SiteIndexing {
     IndexRepository indexRepository;
 
 
-    @PostConstruct
+//    @PostConstruct
     public void runAfterStartup() {
         fieldInit();
         SiteMapBuilder builder = new SiteMapBuilder(searchUrl);
@@ -66,7 +68,9 @@ public class SiteIndexing {
                 pageRepository.save(page);
                 indexingToDb(indexing, page.getPath());
                 indexing.clear();
-            } catch (IOException e) {
+            } catch (UnsupportedMimeTypeException e) {
+                System.out.println("Страница пропущена из за ошибки чтения:\n" + url);
+            }catch (IOException e) {
                 e.printStackTrace();
             }
         }
@@ -124,10 +128,8 @@ public class SiteIndexing {
                 lemmaRepository.save(newLemma);
             } else {
                 int count = lemma1.getFrequency();
-                Lemma newLemma = new Lemma(lemmaName, ++count);
-                newLemma.setId(lemma1.getId());
-                lemmaRepository.delete(lemma1);
-                lemmaRepository.save(newLemma);
+                lemma1.setFrequency(++count);
+                lemmaRepository.save(lemma1);
             }
         }
     }
@@ -149,9 +151,12 @@ public class SiteIndexing {
 
     private void indexingToDb (TreeMap<String, Float> map, String path){
         for (Map.Entry<String, Float> lemma : map.entrySet()) {
-            int path_id = pageRepository.findByPath(path).getId();
-            int lemma_id = lemmaRepository.findByLemma(lemma.getKey()).getId();
-            Indexing indexing = new Indexing(path_id, lemma_id, lemma.getValue());
+            int pathId = pageRepository.findByPath(path).getId();
+            String lemmaName = lemma.getKey();
+            Lemma lemma1 = lemmaRepository.findByLemma(lemmaName);
+            int lemmaId = lemma1.getId();
+            System.out.println(lemmaId);
+            Indexing indexing = new Indexing(pathId, lemmaId, lemma.getValue());
             indexRepository.save(indexing);
         }
     }
