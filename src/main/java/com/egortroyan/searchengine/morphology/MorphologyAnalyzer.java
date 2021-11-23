@@ -45,6 +45,47 @@ public class MorphologyAnalyzer {
         return map;
     }
 
+    public ArrayList<String> getLemmas (String text) throws IOException {
+        ArrayList<String> list = new ArrayList<>();
+        text = text.replaceAll("[—]|\\p{Punct}", " ").toLowerCase(Locale.ROOT);
+        String[] separateWords = text.split("\\s+");
+        for (String word : separateWords) {
+            word = word.trim();
+            if (!isServiceParts(word)) {
+                try {
+                    List<String> words = morphology.getNormalForms(word);
+                    list.add(words.get(0));
+                } catch (WrongCharaterException ex) {
+                    /*пропускаем*/
+                }
+
+            }
+        }
+        return list;
+    }
+
+    public ArrayList<Integer> findLemmaIndexInText(String text, String lemma) {
+        ArrayList<Integer> listOfIndexes = new ArrayList<>();
+        String[] list = text.split("[—]|\\p{Punct}|\\s");
+        int index = 0;
+        for(String s1 : list) {
+            List<String> lemmas = new ArrayList<>();
+            try {
+                lemmas = morphology.getNormalForms(s1.toLowerCase(Locale.ROOT));
+
+            } catch (Exception e) {
+                /*не слово, пропускаем, тк ищем слово*/
+            }
+            for(String s2 : lemmas) {
+                if (s2.equals(lemma)){
+                    listOfIndexes.add(index);
+                }
+            }
+            index += s1.length() + 1;
+        }
+        return listOfIndexes;
+    }
+
     private boolean isServiceParts (String word) throws IOException {
         boolean is = false;
         try {

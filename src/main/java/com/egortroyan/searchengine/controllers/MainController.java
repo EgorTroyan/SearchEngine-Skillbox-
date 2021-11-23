@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.util.List;
 
 @Controller
@@ -31,9 +32,9 @@ public class MainController {
 //        System.out.println("Site is indexing. Ready to search!");
 //    }
     @GetMapping("/search")
-    public String greeting(@RequestParam(name="text", required=false, defaultValue=" ") String text, Model model) {
-        String s = search.searching(new Request(text));
-        model.addAttribute("text", s);
+    public String greeting(@RequestParam(name="text", required=false, defaultValue=" ") String text, Model model) throws IOException {
+        List<Response> s = search.searching(new Request(text));
+        model.addAttribute("responses", s);
         return "search";
     }
 

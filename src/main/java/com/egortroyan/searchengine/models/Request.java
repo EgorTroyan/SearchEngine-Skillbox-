@@ -15,29 +15,18 @@ public class Request {
         return reqLemmas;
     }
 
+    public String getReq() {
+        return req;
+    }
+
     public Request(String req){
         this.req = req;
         reqLemmas = new ArrayList<>();
         try {
             MorphologyAnalyzer analyzer = new MorphologyAnalyzer();
-            TreeMap<String, Integer> map = analyzer.textAnalyzer(req);
-            for (Map.Entry<String, Integer> o : map.entrySet()) {
-                reqLemmas.add(o.getKey());
-            }
+            reqLemmas.addAll(analyzer.getLemmas(req));
         }catch (Exception e) {
             System.out.println("ошибка морфологочиского анализа");
         }
-
-
     }
-
-//   private void makeSortedLemmaMap (String request) throws IOException {
-//       MorphologyAnalyzer analyzer = new MorphologyAnalyzer();
-//       TreeMap<String, Integer> map = analyzer.textAnalyzer(request);
-//       ArrayList<Map.Entry<String, Integer>> list = new ArrayList<>(map.entrySet());
-//       list.sort((o1, o2) -> o1.getValue() - o2.getValue());
-//       for (Map.Entry<String, Integer> o : list) {
-//           reqByLemma.put(o.getKey(), o.getValue());
-//       }
-//   }
 }
