@@ -10,9 +10,14 @@ import java.util.stream.Collectors;
 
 public class SiteMapBuilder {
 
-    private final List<String> siteMap;
+    private final String url;
+    private List<String> siteMap;
 
     public SiteMapBuilder(String url){
+        this.url = url;
+    }
+
+    public void builtSiteMap() {
         String text = new ForkJoinPool().invoke(new ParseUrl(url));
         siteMap = stringToList(text);
     }

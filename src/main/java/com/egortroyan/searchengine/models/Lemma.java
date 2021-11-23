@@ -12,6 +12,8 @@ public class Lemma {
     private int id;
     private String lemma;
     private int frequency;
+    @Column(name = "site_id")
+    private int siteId;
 
     public Lemma() {
     }
@@ -43,5 +45,13 @@ public class Lemma {
 
     public void setFrequency(int frequency) {
         this.frequency = frequency;
+    }
+
+    public int getSiteId() {
+        return siteId;
+    }
+
+    public void setSiteId(int siteId) {
+        this.siteId = siteId;
     }
 }

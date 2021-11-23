@@ -23,16 +23,13 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 @Service
 public class SiteIndexing {
     private boolean isReady = false;
-    @Value("${searchUrl}")
-    private String searchUrl;
+    @Autowired
+    SearchSettings searchSettings;
     @Autowired
     PageRepository pageRepository;
     @Autowired
@@ -43,15 +40,17 @@ public class SiteIndexing {
     IndexRepository indexRepository;
 
 
-//    @PostConstruct
-    public void runAfterStartup() {
+
+    public void runAfterStartup(String searchUrl) {
+        System.out.println(searchSettings.getSite().toString());
         fieldInit();
         SiteMapBuilder builder = new SiteMapBuilder(searchUrl);
+        builder.builtSiteMap();
         List<String> allSiteUrls = builder.getSiteMap();
         List<Field> fieldList = getFieldListFromDB();
         for(String url : allSiteUrls) {
             try {
-                Page page = getSearchPage(url);
+                Page page = getSearchPage(url, searchUrl);
                 TreeMap<String, Integer> map = new TreeMap<>();
                 TreeMap<String, Float> indexing = new TreeMap<>();
                 for (Field field : fieldList){
@@ -84,15 +83,15 @@ public class SiteIndexing {
         fieldRepository.save(fieldBody);
     }
 
-    private Page getSearchPage(String url) throws IOException {
+    private Page getSearchPage(String url, String baseUrl) throws IOException {
         Page page = new Page();
         Connection.Response response = Jsoup.connect(url)
-                .userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+                .userAgent(searchSettings.getAgent())
                 .referrer("http://www.google.com")
                 .execute();
 
         String content = response.body();
-        String path = url.replaceAll(searchUrl, "/");
+        String path = url.replaceAll(baseUrl, "/");
         int code = response.statusCode();
         page.setCode(code);
         page.setPath(path);

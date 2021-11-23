@@ -38,5 +38,9 @@ public class MainController {
         return "search";
     }
 
+    @GetMapping("/admin")
+    public String admin() {
+        return "index";
+    }
 
 }

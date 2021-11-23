@@ -16,6 +16,8 @@ public class Page {
     private int code;
     @Type(type = "text")
     private String content;
+    @Column(name = "site_id")
+    private int siteId;
 
     public int getId() {
         return id;
@@ -47,6 +49,14 @@ public class Page {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public int getSiteId() {
+        return siteId;
+    }
+
+    public void setSiteId(int siteId) {
+        this.siteId = siteId;
     }
 }
 
