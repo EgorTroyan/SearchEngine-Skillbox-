@@ -2,10 +2,12 @@ package com.egortroyan.searchengine.controllers;
 
 
 import com.egortroyan.searchengine.Search;
+import com.egortroyan.searchengine.SearchSettings;
 import com.egortroyan.searchengine.SiteIndexing;
 import com.egortroyan.searchengine.models.Request;
 import com.egortroyan.searchengine.models.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,8 +19,11 @@ import java.util.List;
 
 @Controller
 public class MainController {
+//    @Autowired
+//    Search search;
     @Autowired
-    Search search;
+    SearchSettings settings;
+
 //    @Autowired
 //    SiteIndexing siteIndexing;
 
@@ -31,12 +36,12 @@ public class MainController {
 //        }
 //        System.out.println("Site is indexing. Ready to search!");
 //    }
-    @GetMapping("/search")
-    public String greeting(@RequestParam(name="text", required=false, defaultValue=" ") String text, Model model) throws IOException {
-        List<Response> s = search.searching(new Request(text));
-        model.addAttribute("responses", s);
-        return "search";
-    }
+//    @GetMapping("/search")
+//    public String greeting(@RequestParam(name="text", required=false, defaultValue=" ") String text, Model model) throws IOException {
+//        List<Response> s = search.searching(new Request(text));
+//        model.addAttribute("responses", s);
+//        return "search";
+//    }
 
     @GetMapping("/admin")
     public String admin() {

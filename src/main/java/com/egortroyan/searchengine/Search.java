@@ -6,6 +6,7 @@ import com.egortroyan.searchengine.repo.FieldRepository;
 import com.egortroyan.searchengine.repo.IndexRepository;
 import com.egortroyan.searchengine.repo.LemmaRepository;
 import com.egortroyan.searchengine.repo.PageRepository;
+import com.egortroyan.searchengine.service.impl.RepositoriesServiceImpl;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -18,12 +19,14 @@ import java.util.*;
 
 @Component
 public class Search {
+//    @Autowired
+//    PageRepository pageRepository;
+//    @Autowired
+//    LemmaRepository lemmaRepository;
+//    @Autowired
+//    IndexRepository indexRepository;
     @Autowired
-    PageRepository pageRepository;
-    @Autowired
-    LemmaRepository lemmaRepository;
-    @Autowired
-    IndexRepository indexRepository;
+    RepositoriesServiceImpl repo;
 
     public Search() {
     }
@@ -33,13 +36,13 @@ public class Search {
         List<Lemma> reqLemmas = sortedReqLemmas(request);
         List<Integer> pageIndexes = new ArrayList<>();
         if (!(reqLemmas == null)) {
-            List<Indexing> indexingList = indexRepository.findByLemmaId(reqLemmas.get(0).getId());
+            List<Indexing> indexingList = repo.getAllIndexing(reqLemmas.get(0).getId());
             indexingList.forEach(indexing ->
                     pageIndexes.add(indexing.getPageId())
             );
             for (Lemma lemma : reqLemmas) {
                 if (!pageIndexes.isEmpty()) {
-                    List<Indexing> indexingList2 = indexRepository.findByLemmaId(lemma.getId());
+                    List<Indexing> indexingList2 = repo.getAllIndexing(lemma.getId());
                     List<Integer> tempList = new ArrayList<>();
                     indexingList2.forEach(indexing -> tempList.add(indexing.getPageId()));
                     pageIndexes.retainAll(tempList);
@@ -51,7 +54,7 @@ public class Search {
             HashMap<Page, Double> pageRelevance = new HashMap<>();
             double maxRel = 0.0;
             for (Integer p : pageIndexes) {
-                Optional<Page> opPage = pageRepository.findById(p);
+                Optional<Page> opPage = repo.findPageById(p);
                 if (opPage.isPresent()) {
                     Page page = opPage.get();
                     double r = getAbsRelevance(page, reqLemmas);
@@ -77,7 +80,7 @@ public class Search {
         List<Lemma> lemmaList = new ArrayList<>();
         List<String> list = request.getReqLemmas();
         for(String s : list) {
-            Lemma lemma = lemmaRepository.findByLemma(s);
+            Lemma lemma = repo.getLemma(s);
             if (lemma == null){
                 return null;
             } else {
@@ -93,7 +96,7 @@ public class Search {
         int pageId = page.getId();
         for (Lemma lemma : lemmas) {
             int lemmaId = lemma.getId();
-            Indexing indexing = indexRepository.findByLemmaIdAndPageId(lemmaId, pageId);
+            Indexing indexing = repo.getIndexing(lemmaId, pageId);
             r = r + indexing.getRank();
         }
         return r;
