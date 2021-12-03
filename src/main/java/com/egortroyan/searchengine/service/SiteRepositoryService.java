@@ -8,5 +8,6 @@ import java.util.List;
 public interface SiteRepositoryService {
     Site getSite (String url);
     void save(Site site);
+    long siteCount();
 
 }

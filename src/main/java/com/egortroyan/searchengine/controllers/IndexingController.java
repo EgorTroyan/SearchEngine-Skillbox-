@@ -5,8 +5,9 @@ import com.egortroyan.searchengine.service.responses.ResponseService;
 import com.egortroyan.searchengine.service.responses.FalseResponseService;
 import com.egortroyan.searchengine.service.responses.TrueResponseService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -18,7 +19,7 @@ public class IndexingController {
     Index index;
 
     @GetMapping("/api/startIndexing")
-    public String startIndexingAll(Model model) {
+    public ResponseEntity<Object> startIndexingAll() {
         System.out.println("Starting indexing all");
         ResponseService response;
         boolean indexing = index.allSiteIndexing();
@@ -27,12 +28,11 @@ public class IndexingController {
         } else {
             response = new FalseResponseService("Индексация уже запущена");
         }
-        model.addAttribute(response);
-        return "index";
+        return new ResponseEntity<Object>(response, HttpStatus.OK);
     }
 
     @GetMapping("/api/stopIndexing")
-    public String stopIndexingAll(Model model) {
+    public ResponseEntity<Object> stopIndexingAll() {
         System.out.println("Stop indexing all");
         boolean indexing = index.stopSiteIndexing();
         ResponseService response;
@@ -41,12 +41,13 @@ public class IndexingController {
         } else {
             response = new FalseResponseService("Индексация не запущена");
         }
-        model.addAttribute("stopIndexing", response);
-        return "index";
+        return new ResponseEntity<Object>(response, HttpStatus.OK);
     }
 
     @PostMapping("/api/indexPage")
-    public String startIndexingOne(@RequestParam(name="url", required=false, defaultValue=" ") String url, Model model) {
+    public ResponseEntity<Object> startIndexingOne(
+            @RequestParam(name="url", required=false, defaultValue=" ")
+                    String url) {
         System.out.println("Indexing url: " + url);
         String response = index.checkedSiteIndexing(url);
         ResponseService resp;
@@ -60,7 +61,6 @@ public class IndexingController {
         else {
             resp = new TrueResponseService();
         }
-        model.addAttribute(resp);
-        return "index";
+        return new ResponseEntity<Object>(response, HttpStatus.OK);
     }
 }

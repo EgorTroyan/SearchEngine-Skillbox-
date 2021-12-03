@@ -72,6 +72,15 @@ public class RepositoriesServiceImpl implements FieldRepositoryService,
         lemmaRepository.save(lemma);
     }
 
+    @Override
+    public long lemmaCount(){
+        return lemmaRepository.count();
+    }
+
+    public long lemmaCount(long siteId){
+        return lemmaRepository.count(siteId);
+    }
+
 
 
     @Override
@@ -89,6 +98,15 @@ public class RepositoriesServiceImpl implements FieldRepositoryService,
         return pageRepository.findById(id);
     }
 
+    @Override
+    public long pageCount(){
+        return pageRepository.count();
+    }
+
+    public long pageCount(long siteId){
+        return pageRepository.count(siteId);
+    }
+
 
     @Override
     public synchronized Site getSite(String url) {
@@ -98,6 +116,18 @@ public class RepositoriesServiceImpl implements FieldRepositoryService,
     @Override
     public synchronized void save(Site site) {
         siteRepository.save(site);
+    }
+
+    @Override
+    public long siteCount(){
+        return siteRepository.count();
+    }
+
+    public List<Site> getAllSites() {
+        List<Site> siteList = new ArrayList<>();
+        Iterable<Site> it = siteRepository.findAll();
+        it.forEach(siteList::add);
+        return siteList;
     }
 
 

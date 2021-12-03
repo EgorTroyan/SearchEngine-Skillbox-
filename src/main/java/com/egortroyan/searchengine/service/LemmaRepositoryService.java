@@ -8,5 +8,5 @@ import java.util.List;
 public interface LemmaRepositoryService {
     Lemma getLemma (String lemmaName);
     void save(Lemma lemma);
-
+    long lemmaCount();
 }

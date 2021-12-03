@@ -10,4 +10,5 @@ public interface PageRepositoryService {
     Page getPage (String pagePath);
     void save(Page page);
     Optional<Page> findPageById(int id);
+    long pageCount();
 }

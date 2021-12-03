@@ -1,19 +1,19 @@
 package com.egortroyan.searchengine.service.responses;
 
 public class Total {
-    int sites;
-    int pages;
-    int lemmas;
+    long sites;
+    long pages;
+    long lemmas;
     boolean isIndexing;
 
-    public Total(int sites, int pages, int lemmas, boolean isIndexing) {
+    public Total(long sites, long pages, long lemmas, boolean isIndexing) {
         this.sites = sites;
         this.pages = pages;
         this.lemmas = lemmas;
         this.isIndexing = isIndexing;
     }
 
-    public int getSites() {
+    public long getSites() {
         return sites;
     }
 
@@ -21,7 +21,7 @@ public class Total {
         this.sites = sites;
     }
 
-    public int getPages() {
+    public long getPages() {
         return pages;
     }
 
@@ -29,7 +29,7 @@ public class Total {
         this.pages = pages;
     }
 
-    public int getLemmas() {
+    public long getLemmas() {
         return lemmas;
     }
 

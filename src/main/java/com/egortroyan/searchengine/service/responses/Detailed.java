@@ -7,12 +7,24 @@ public class Detailed {
     String name;
     Status status;
     long statusTime;
+    String error;
+    long pages;
+    long lemmas;
 
-    public Detailed(String url, String name, Status status, long statusTime) {
+    public Detailed(String url,
+                    String name,
+                    Status status,
+                    long statusTime,
+                    String error,
+                    long pages,
+                    long lemmas) {
         this.url = url;
         this.name = name;
         this.status = status;
         this.statusTime = statusTime;
+        this.error = error;
+        this.pages = pages;
+        this.lemmas = lemmas;
     }
 
     public String getUrl() {
@@ -45,5 +57,29 @@ public class Detailed {
 
     public void setStatusTime(long statusTime) {
         this.statusTime = statusTime;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
+    }
+
+    public long getPages() {
+        return pages;
+    }
+
+    public void setPages(long pages) {
+        this.pages = pages;
+    }
+
+    public long getLemmas() {
+        return lemmas;
+    }
+
+    public void setLemmas(long lemmas) {
+        this.lemmas = lemmas;
     }
 }
