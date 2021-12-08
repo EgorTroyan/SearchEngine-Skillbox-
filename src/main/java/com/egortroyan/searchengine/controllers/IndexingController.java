@@ -22,13 +22,20 @@ public class IndexingController {
     public ResponseEntity<Object> startIndexingAll() {
         System.out.println("Starting indexing all");
         ResponseService response;
-        boolean indexing = index.allSiteIndexing();
+        boolean indexing = false;
+        try {
+            indexing = index.allSiteIndexing();
+        } catch (InterruptedException e) {
+            response = new FalseResponseService("Ошибка запуска индексации");
+            return new ResponseEntity<Object>(response, HttpStatus.NOT_FOUND);
+        }
         if (indexing) {
             response = new TrueResponseService();
+            return new ResponseEntity<Object>(response, HttpStatus.OK);
         } else {
             response = new FalseResponseService("Индексация уже запущена");
+            return new ResponseEntity<Object>(response, HttpStatus.TOO_MANY_REQUESTS);
         }
-        return new ResponseEntity<Object>(response, HttpStatus.OK);
     }
 
     @GetMapping("/api/stopIndexing")
@@ -38,29 +45,42 @@ public class IndexingController {
         ResponseService response;
         if (indexing) {
             response = new TrueResponseService();
+            return new ResponseEntity<Object>(response, HttpStatus.OK);
         } else {
             response = new FalseResponseService("Индексация не запущена");
+            return new ResponseEntity<Object>(response, HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<Object>(response, HttpStatus.OK);
     }
 
     @PostMapping("/api/indexPage")
     public ResponseEntity<Object> startIndexingOne(
             @RequestParam(name="url", required=false, defaultValue=" ")
                     String url) {
-        System.out.println("Indexing url: " + url);
-        String response = index.checkedSiteIndexing(url);
+        System.out.println("Попытка запуска индексации отдельной страницы: " + url);
         ResponseService resp;
+        String response = null;
+        try {
+            response = index.checkedSiteIndexing(url);
+        } catch (InterruptedException e) {
+            resp = new FalseResponseService("Ошибка запуска индексации");
+            return new ResponseEntity<Object>(resp, HttpStatus.NOT_FOUND);
+        }
+
         if (response.equals("not found")) {
             resp = new FalseResponseService("Страница находится за пределами сайтов," +
                     " указанных в конфигурационном файле");
+            System.out.println(resp.toString());
+            return new ResponseEntity<Object>(resp, HttpStatus.NOT_FOUND);
         }
         else if (response.equals("false")) {
             resp = new FalseResponseService("Индексация страницы уже запущена");
+            System.out.println(resp.toString());
+            return new ResponseEntity<Object>(resp, HttpStatus.TOO_MANY_REQUESTS);
         }
         else {
             resp = new TrueResponseService();
+            System.out.println("ОК!");
+            return new ResponseEntity<Object>(resp, HttpStatus.OK);
         }
-        return new ResponseEntity<Object>(response, HttpStatus.OK);
     }
 }

@@ -1,5 +1,6 @@
 package com.egortroyan.searchengine;
 
+import com.egortroyan.searchengine.models.Field;
 import com.egortroyan.searchengine.models.Site;
 import com.egortroyan.searchengine.models.Status;
 import com.egortroyan.searchengine.service.impl.RepositoriesServiceImpl;
@@ -19,7 +20,9 @@ public class Index {
     RepositoriesServiceImpl repositoriesService;
     private final List<Thread> threads = new ArrayList<>();
 
-    public boolean allSiteIndexing(){
+
+    public boolean allSiteIndexing() throws InterruptedException {
+        fieldInit();
         boolean isIndexing;
         List<Site> siteList = getSiteListFromConfig();
         for (Site site : siteList) {
@@ -32,48 +35,65 @@ public class Index {
         return true;
     }
 
-    public String checkedSiteIndexing(String url){
-        boolean isPresent = false;
-        int siteIndex = 0;
-        List<Site> siteList = getSiteListFromConfig();
-        for (Site s : siteList){
-            if (s.getUrl().equals(url)) {
-                isPresent = true;
-                siteIndex = siteList.indexOf(s);
-                break;
-            }
-        }
-        if (!isPresent){
-            return "not found";
-        } else {
-            boolean isStarted = startSiteIndexing(siteList.get(siteIndex));
-            if (isStarted) {
-                return "true";
-            } else {
+    public String checkedSiteIndexing(String url) throws InterruptedException {
+        List<Site> siteList = repositoriesService.getAllSites();
+        String baseUrl = "";
+        for(Site site : siteList) {
+            if(site.getStatus() != Status.INDEXED) {
                 return "false";
             }
+            if(url.contains(site.getUrl())){
+                baseUrl = site.getUrl();
+            }
+        }
+        if(baseUrl.isEmpty()){
+            return "not found";
+        } else {
+            Site site = repositoriesService.getSite(baseUrl);
+            site.setUrl(url);
+            SiteIndexing indexing = new SiteIndexing(
+                    site,
+                    searchSettings,
+                    repositoriesService, false);
+            indexing.start();
+            threads.add(indexing);
+            indexing.join();
+            site.setUrl(baseUrl);
+            repositoriesService.save(site);
+            return "true";
         }
     }
 
-    private boolean startSiteIndexing(Site site){
+    private void fieldInit() {
+        Field fieldTitle = new Field("title", "title", 1.0f);
+        Field fieldBody = new Field("body", "body", 0.8f);
+        if (repositoriesService.getFieldByName("title") == null) {
+            repositoriesService.save(fieldTitle);
+            repositoriesService.save(fieldBody);
+        }
+    }
+
+    private boolean startSiteIndexing(Site site) throws InterruptedException {
         Site site1 = repositoriesService.getSite(site.getUrl());
         if (site1 == null) {
             repositoriesService.save(site);
             SiteIndexing indexing = new SiteIndexing(
                     repositoriesService.getSite(site.getUrl()),
                     searchSettings,
-                    repositoriesService);
+                    repositoriesService, true);
             indexing.start();
             threads.add(indexing);
+            //indexing.join();
             return true;
         } else {
             if (!site1.getStatus().equals(Status.INDEXING)){
                 SiteIndexing indexing = new SiteIndexing(
                         repositoriesService.getSite(site.getUrl()),
                         searchSettings,
-                        repositoriesService);
+                        repositoriesService, true);
                 indexing.start();
                 threads.add(indexing);
+                //indexing.join();
                 return true;
             } else {
                 return false;
@@ -85,8 +105,16 @@ public class Index {
         boolean isThreadAlive = false;
         for(Thread thread : threads) {
             if(thread.isAlive()) {
+                System.out.println("Останавливаем поток" + thread);
                 isThreadAlive = true;
                 thread.interrupt();
+            }
+        }
+        if (isThreadAlive){
+            List<Site> siteList = repositoriesService.getAllSites();
+            for(Site site : siteList) {
+                site.setStatus(Status.FAILED);
+                repositoriesService.save(site);
             }
         }
         return isThreadAlive;

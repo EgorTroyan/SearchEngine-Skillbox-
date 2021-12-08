@@ -64,7 +64,14 @@ public class RepositoriesServiceImpl implements FieldRepositoryService,
 
     @Override
     public synchronized Lemma getLemma(String lemmaName) {
-        return lemmaRepository.findByLemma(lemmaName);
+        Lemma lemma = null;
+        try{
+            lemma = lemmaRepository.findByLemma(lemmaName);
+        } catch (Exception e) {
+            System.out.println(lemmaName);
+            e.printStackTrace();
+        }
+        return lemma;
     }
 
     @Override

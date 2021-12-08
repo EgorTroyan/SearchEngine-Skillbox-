@@ -9,7 +9,7 @@ import java.util.*;
 
 public class MorphologyAnalyzer {
     private static final Set<String> parts;
-    private final LuceneMorphology morphology;
+    private static LuceneMorphology morphology = null;
     private final TreeMap<String, Integer> map;
 
     static {
@@ -18,34 +18,38 @@ public class MorphologyAnalyzer {
         parts.add("СОЮЗ");
         parts.add("МЕЖД");
         parts.add("ПРЕДЛ");
+        try {
+            morphology = new RussianLuceneMorphology();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public MorphologyAnalyzer() throws IOException {
-        morphology = new RussianLuceneMorphology();
+    public MorphologyAnalyzer(){
         map = new TreeMap<>();
     }
 
-    public TreeMap<String, Integer> textAnalyzer (String text) throws IOException {
+    public TreeMap<String, Integer> textAnalyzer (String text) {
         text = text.replaceAll("[—]|\\p{Punct}", " ").toLowerCase(Locale.ROOT);
         String[] separateWords = text.split("\\s+");
         for (String word : separateWords) {
             word = word.trim();
-            if (!isServiceParts(word)) {
-                try {
+            try {
+                if (!isServiceParts(word)) {
+
                     List<String> words = morphology.getNormalForms(word);
                     for(String s : words) {
                         putWordsToMap(s);
                     }
-                } catch (WrongCharaterException ex) {
-                    /*пропускаем*/
                 }
-
+            } catch (Exception ex) {
+                /*пропускаем все ошибки морфологического анализа*/
             }
         }
         return map;
     }
 
-    public ArrayList<String> getLemmas (String text) throws IOException {
+    public ArrayList<String> getLemmas (String text) {
         ArrayList<String> list = new ArrayList<>();
         text = text.replaceAll("[—]|\\p{Punct}", " ").toLowerCase(Locale.ROOT);
         String[] separateWords = text.split("\\s+");
@@ -86,7 +90,7 @@ public class MorphologyAnalyzer {
         return listOfIndexes;
     }
 
-    private boolean isServiceParts (String word) throws IOException {
+    private boolean isServiceParts (String word) {
         boolean is = false;
         try {
             List<String> list = morphology.getMorphInfo(word);

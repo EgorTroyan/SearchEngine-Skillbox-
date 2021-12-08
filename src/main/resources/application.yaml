@@ -17,7 +17,7 @@ config:
   site:
     - url: https://dombulgakova.ru
       name: Dom Bulgakova
-    - url: https://skillbox.ru
-      name: Skillbox web site
+    - url: https://www.svetlovka.ru/
+      name: Библиотека
 
 
