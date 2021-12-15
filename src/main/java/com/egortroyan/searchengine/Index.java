@@ -1,8 +1,6 @@
 package com.egortroyan.searchengine;
 
-import com.egortroyan.searchengine.models.Field;
-import com.egortroyan.searchengine.models.Site;
-import com.egortroyan.searchengine.models.Status;
+import com.egortroyan.searchengine.models.*;
 import com.egortroyan.searchengine.service.impl.RepositoriesServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -50,7 +48,9 @@ public class Index {
             return "not found";
         } else {
             Site site = repositoriesService.getSite(baseUrl);
+            //Page page = repositoriesService.getPage(url.replaceAll(baseUrl, ""));
             site.setUrl(url);
+            //prepareDbToIndexing(page);
             SiteIndexing indexing = new SiteIndexing(
                     site,
                     searchSettings,
@@ -63,6 +63,16 @@ public class Index {
             return "true";
         }
     }
+
+//    private void prepareDbToIndexing(Page page) {
+//        //Page page = repositoriesService.getPage(url.replaceAll(baseUrl, ""));
+//        List<Indexing> indexingList = repositoriesService.getAllIndexingByPageId(page.getId());
+//        List<Lemma> allLemmasIdByPage = repositoriesService.findLemmasByIndexing(indexingList);
+//        repositoriesService.deleteAllLemmas(allLemmasIdByPage);
+//        repositoriesService.deleteAllIndexing(indexingList);
+//        repositoriesService.deletePage(page);
+//
+//    }
 
     private void fieldInit() {
         Field fieldTitle = new Field("title", "title", 1.0f);

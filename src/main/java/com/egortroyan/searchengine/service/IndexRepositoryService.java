@@ -6,7 +6,7 @@ import com.egortroyan.searchengine.models.Indexing;
 import java.util.List;
 
 public interface IndexRepositoryService {
-    List<Indexing> getAllIndexing (int lemmaId);
+    List<Indexing> getAllIndexingByLemmaId(int lemmaId);
     Indexing getIndexing (int lemmaId, int pageId);
     void save(Indexing indexing);
 

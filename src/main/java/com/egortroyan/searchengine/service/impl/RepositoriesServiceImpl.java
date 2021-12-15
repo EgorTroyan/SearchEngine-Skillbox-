@@ -46,13 +46,28 @@ public class RepositoriesServiceImpl implements FieldRepositoryService,
 
 
     @Override
-    public synchronized List<Indexing> getAllIndexing(int lemmaId) {
+    public synchronized List<Indexing> getAllIndexingByLemmaId(int lemmaId) {
         return indexRepository.findByLemmaId(lemmaId);
+    }
+
+    public synchronized List<Indexing> getAllIndexingByPageId(int pageId) {
+        return indexRepository.findByPageId(pageId);
+    }
+
+    public void deleteAllIndexing(List<Indexing> indexingList){
+        indexRepository.deleteAll(indexingList);
     }
 
     @Override
     public synchronized Indexing getIndexing(int lemmaId, int pageId) {
-        return indexRepository.findByLemmaIdAndPageId(lemmaId, pageId);
+        Indexing indexing = null;
+        try{
+            indexing = indexRepository.findByLemmaIdAndPageId(lemmaId, pageId);
+        } catch (Exception e) {
+            System.out.println("lemmaId: " + lemmaId + " + pageId: " + pageId + " not unique");
+            e.printStackTrace();
+        }
+        return indexing;
     }
 
     @Override
@@ -88,6 +103,18 @@ public class RepositoriesServiceImpl implements FieldRepositoryService,
         return lemmaRepository.count(siteId);
     }
 
+    public void deleteAllLemmas(List<Lemma> lemmaList){
+        lemmaRepository.deleteAll(lemmaList);
+    }
+
+    public List<Lemma> findLemmasByIndexing(List<Indexing> indexingList){
+        int[] lemmaIdList = new int[indexingList.size()];
+        for (int i = 0; i < indexingList.size(); i++) {
+            lemmaIdList[i] = indexingList.get(i).getLemmaId();
+        }
+        return lemmaRepository.findById(lemmaIdList);
+    }
+
 
 
     @Override
@@ -105,6 +132,10 @@ public class RepositoriesServiceImpl implements FieldRepositoryService,
         return pageRepository.findById(id);
     }
 
+    public synchronized Optional<Page> findPageByPageIdAndSiteId(int pageId, int siteId) {
+        return pageRepository.findByIdAndSiteId(pageId, siteId);
+    }
+
     @Override
     public long pageCount(){
         return pageRepository.count();
@@ -114,11 +145,24 @@ public class RepositoriesServiceImpl implements FieldRepositoryService,
         return pageRepository.count(siteId);
     }
 
+    public void deletePage(Page page) {
+        pageRepository.delete(page);
+    }
+
 
     @Override
     public synchronized Site getSite(String url) {
         return siteRepository.findByUrl(url);
     }
+    public synchronized Site getSite(int siteId) {
+        Optional<Site> optional = siteRepository.findById(siteId);
+        Site site = null;
+        if(optional.isPresent()){
+            site = optional.get();
+        }
+        return site;
+    }
+
 
     @Override
     public synchronized void save(Site site) {

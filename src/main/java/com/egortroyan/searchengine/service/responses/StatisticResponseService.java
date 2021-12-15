@@ -1,6 +1,8 @@
 package com.egortroyan.searchengine.service.responses;
 
 
+import com.egortroyan.searchengine.service.indexResponseEntity.Statistics;
+
 public class StatisticResponseService {
     boolean result;
     Statistics statistics;

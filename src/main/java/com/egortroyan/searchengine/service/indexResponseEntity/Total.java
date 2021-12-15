@@ -1,4 +1,4 @@
-package com.egortroyan.searchengine.service.responses;
+package com.egortroyan.searchengine.service.indexResponseEntity;
 
 public class Total {
     long sites;

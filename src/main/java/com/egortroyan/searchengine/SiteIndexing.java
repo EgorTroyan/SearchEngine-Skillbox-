@@ -58,6 +58,11 @@ public class SiteIndexing extends Thread{
         List<Field> fieldList = getFieldListFromDB();
         try {
             Page page = getSearchPage(searchUrl, site.getUrl(), site.getId());
+            Page checkPage = repo.getPage(searchUrl.replaceAll(site.getUrl(), ""));
+            if (checkPage != null){
+                System.out.println("Такая страница уже есть в базе, чистим базу:\n" + searchUrl);
+                prepareDbToIndexing(checkPage);
+            }
             TreeMap<String, Integer> map = new TreeMap<>();
             TreeMap<String, Float> indexing = new TreeMap<>();
             for (Field field : fieldList){
@@ -105,7 +110,7 @@ public class SiteIndexing extends Thread{
                 .execute();
 
         String content = response.body();
-        String path = url.replaceAll(baseUrl, "/");
+        String path = url.replaceAll(baseUrl, "");
         int code = response.statusCode();
         page.setCode(code);
         page.setPath(path);
@@ -172,5 +177,14 @@ public class SiteIndexing extends Thread{
             Indexing indexing = new Indexing(pathId, lemmaId, lemma.getValue());
             repo.save(indexing);
         }
+    }
+
+    private void prepareDbToIndexing(Page page) {
+        //Page page = repositoriesService.getPage(url.replaceAll(baseUrl, ""));
+        List<Indexing> indexingList = repo.getAllIndexingByPageId(page.getId());
+        List<Lemma> allLemmasIdByPage = repo.findLemmasByIndexing(indexingList);
+        repo.deleteAllLemmas(allLemmasIdByPage);
+        repo.deleteAllIndexing(indexingList);
+        repo.deletePage(page);
     }
 }

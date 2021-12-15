@@ -3,10 +3,10 @@ package com.egortroyan.searchengine;
 import com.egortroyan.searchengine.models.Site;
 import com.egortroyan.searchengine.models.Status;
 import com.egortroyan.searchengine.service.impl.RepositoriesServiceImpl;
-import com.egortroyan.searchengine.service.responses.Detailed;
+import com.egortroyan.searchengine.service.indexResponseEntity.Detailed;
 import com.egortroyan.searchengine.service.responses.StatisticResponseService;
-import com.egortroyan.searchengine.service.responses.Statistics;
-import com.egortroyan.searchengine.service.responses.Total;
+import com.egortroyan.searchengine.service.indexResponseEntity.Statistics;
+import com.egortroyan.searchengine.service.indexResponseEntity.Total;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
