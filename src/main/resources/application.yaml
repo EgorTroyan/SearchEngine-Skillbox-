@@ -11,13 +11,15 @@ spring:
 
 #Служебная информация и список сайтов для индексации
 config:
+  webinterfacelogin: admin
+  webinterfacepassword: Qwerty22
   prefix: search_
   agent: Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6
   webinterface: /admin
   site:
     - url: https://dombulgakova.ru
       name: Dom Bulgakova
-    - url: https://www.svetlovka.ru/
+    - url: https://www.svetlovka.ru
       name: Библиотека
 
 

@@ -10,6 +10,10 @@ public class SearchResponseService {
     public SearchResponseService() {
     }
 
+    public SearchResponseService(boolean result) {
+        this.result = result;
+    }
+
     public SearchResponseService(boolean result, int count, SearchData[] data) {
         this.result = result;
         this.count = count;

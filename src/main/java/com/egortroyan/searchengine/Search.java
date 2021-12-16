@@ -26,9 +26,12 @@ public class Search {
     }
 
     public SearchResponseService searchService (Request request, String url, int offset, int limit) throws IOException {
-        boolean result = false;
+        //boolean result = false;
         int count;
         List<SearchData> list = searching(request, url);
+        if (list.isEmpty()){
+            return new SearchResponseService(false);
+        }
         if(limit + offset < list.size()) {
             count = limit;
         } else {
@@ -38,10 +41,8 @@ public class Search {
         for (int i = offset; i < count; i++) {
             searchData[i] = list.get(i);
         }
-        if (count != 0){
-            result = true;
-        }
-        return new SearchResponseService(result, count, searchData);
+
+        return new SearchResponseService(true, count, searchData);
     }
 
     public List<SearchData> searching(Request request, String siteUrl) throws IOException {
@@ -110,7 +111,7 @@ public class Search {
                 lemmaList.add(lemma);
             }
         }
-        lemmaList.sort((o1, o2) -> o1.getFrequency() - o2.getFrequency());
+        lemmaList.sort(Comparator.comparingInt(Lemma::getFrequency));
         return lemmaList;
     }
 
@@ -157,7 +158,6 @@ public class Search {
 
     private String getSnippet (String html, Request request) throws IOException {
         MorphologyAnalyzer analyzer = new MorphologyAnalyzer();
-        String snippet = "";
         String string = "";
         Document document = Jsoup.parse(html);
         Elements titleElements = document.select("title");
@@ -169,12 +169,9 @@ public class Search {
             string = builder.toString();
         }
         List<String> req = request.getReqLemmas();
-        ArrayList<Integer>[] reqIndexes = new ArrayList[req.size()];
-        Set<Integer> integerList = new TreeSet<Integer>();
-        for (int i = 0; i < reqIndexes.length; i++) {
-            ArrayList<Integer> list = analyzer.findLemmaIndexInText(string, req.get(i));
-            reqIndexes[i] = list;
-            integerList.addAll(list);
+        Set<Integer> integerList = new TreeSet<>();
+        for (String s : req) {
+            integerList.addAll(analyzer.findLemmaIndexInText(string, s));
         }
         List<TreeSet<Integer>> indexesList = getSearchingIndexes(string, integerList);
         StringBuilder builder1 = new StringBuilder();
@@ -199,7 +196,6 @@ public class Search {
     }
 
     private List<TreeSet<Integer>> getSearchingIndexes (String string, Set<Integer> indexesOfBolt) {
-        StringBuilder builder1 = new StringBuilder();
         ArrayList<Integer> indexes = new ArrayList<>(indexesOfBolt);
         List<TreeSet<Integer>> list = new ArrayList<>();
         TreeSet<Integer> temp = new TreeSet<>();
@@ -246,7 +242,7 @@ public class Search {
         Map<K,V> result = new LinkedHashMap<>();
         Stream<Map.Entry<K,V>> st = map.entrySet().stream();
 
-        st.sorted(Map.Entry.comparingByValue())
+        st.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .forEach(e ->result.put(e.getKey(),e.getValue()));
 
         return result;

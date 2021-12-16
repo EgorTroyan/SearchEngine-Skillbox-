@@ -2,6 +2,7 @@ package com.egortroyan.searchengine.controllers;
 
 import com.egortroyan.searchengine.Search;
 import com.egortroyan.searchengine.models.Request;
+import com.egortroyan.searchengine.service.responses.FalseResponseService;
 import com.egortroyan.searchengine.service.responses.SearchResponseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,13 +26,19 @@ public class SearchController {
             @RequestParam(name="offset", required=false, defaultValue="0") int offset,
             @RequestParam(name="limit", required=false, defaultValue="0") int limit) throws IOException {
         SearchResponseService service;
+        if (query.equals("")){
+            return new ResponseEntity<Object> (new FalseResponseService("Задан пустой поисковый запрос"), HttpStatus.OK);
+        }
         if(site.equals("")) {
             service = search.searchService(new Request(query), null, offset, limit);
         } else {
             service = search.searchService(new Request(query), site, offset, limit);
         }
-
-        return new ResponseEntity<Object> (service, HttpStatus.OK);
+        if (service.isResult()) {
+            return new ResponseEntity<Object>(service, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<Object> (new FalseResponseService("Указанная страница не найдена"), HttpStatus.OK);
+        }
     }
 
 

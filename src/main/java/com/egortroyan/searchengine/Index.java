@@ -48,9 +48,7 @@ public class Index {
             return "not found";
         } else {
             Site site = repositoriesService.getSite(baseUrl);
-            //Page page = repositoriesService.getPage(url.replaceAll(baseUrl, ""));
             site.setUrl(url);
-            //prepareDbToIndexing(page);
             SiteIndexing indexing = new SiteIndexing(
                     site,
                     searchSettings,
@@ -64,15 +62,6 @@ public class Index {
         }
     }
 
-//    private void prepareDbToIndexing(Page page) {
-//        //Page page = repositoriesService.getPage(url.replaceAll(baseUrl, ""));
-//        List<Indexing> indexingList = repositoriesService.getAllIndexingByPageId(page.getId());
-//        List<Lemma> allLemmasIdByPage = repositoriesService.findLemmasByIndexing(indexingList);
-//        repositoriesService.deleteAllLemmas(allLemmasIdByPage);
-//        repositoriesService.deleteAllIndexing(indexingList);
-//        repositoriesService.deletePage(page);
-//
-//    }
 
     private void fieldInit() {
         Field fieldTitle = new Field("title", "title", 1.0f);
@@ -93,7 +82,6 @@ public class Index {
                     repositoriesService, true);
             indexing.start();
             threads.add(indexing);
-            //indexing.join();
             return true;
         } else {
             if (!site1.getStatus().equals(Status.INDEXING)){
@@ -103,7 +91,6 @@ public class Index {
                         repositoriesService, true);
                 indexing.start();
                 threads.add(indexing);
-                //indexing.join();
                 return true;
             } else {
                 return false;
