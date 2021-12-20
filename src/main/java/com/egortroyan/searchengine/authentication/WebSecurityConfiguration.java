@@ -22,13 +22,12 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
         auth.inMemoryAuthentication()
                 .withUser(settings.getWebinterfaceLogin()).password(passwordEncoder().encode(settings.getWebinterfacePassword()))
-                .authorities("ROLE_USER");
+                .authorities("ADMIN");
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
-                .antMatchers("/admin").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .httpBasic();
