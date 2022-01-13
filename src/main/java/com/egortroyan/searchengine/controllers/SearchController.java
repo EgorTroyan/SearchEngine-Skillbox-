@@ -4,7 +4,6 @@ import com.egortroyan.searchengine.Search;
 import com.egortroyan.searchengine.models.Request;
 import com.egortroyan.searchengine.service.responses.FalseResponseService;
 import com.egortroyan.searchengine.service.responses.SearchResponseService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -16,8 +15,11 @@ import java.io.IOException;
 @Controller
 public class SearchController {
 
-    @Autowired
-    Search search;
+    private final Search search;
+
+    public SearchController(Search search) {
+        this.search = search;
+    }
 
     @GetMapping("/api/search")
     public ResponseEntity<Object> search(

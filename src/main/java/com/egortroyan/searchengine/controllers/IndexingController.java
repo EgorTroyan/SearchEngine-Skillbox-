@@ -1,10 +1,9 @@
 package com.egortroyan.searchengine.controllers;
 
 import com.egortroyan.searchengine.Index;
-import com.egortroyan.searchengine.service.responses.ResponseService;
 import com.egortroyan.searchengine.service.responses.FalseResponseService;
+import com.egortroyan.searchengine.service.responses.ResponseService;
 import com.egortroyan.searchengine.service.responses.TrueResponseService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -15,8 +14,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 
 public class IndexingController {
-    @Autowired
-    Index index;
+
+    private final Index index;
+
+    public IndexingController(Index index) {
+        this.index = index;
+    }
 
     @GetMapping("/api/startIndexing")
     public ResponseEntity<Object> startIndexingAll() {

@@ -15,8 +15,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableWebSecurity
 public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
-    @Autowired
-    SearchSettings settings;
+    private final SearchSettings settings;
+
+    public WebSecurityConfiguration(SearchSettings settings) {
+        this.settings = settings;
+    }
 
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
