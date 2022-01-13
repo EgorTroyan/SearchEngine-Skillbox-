@@ -18,9 +18,10 @@ public class Lemma {
     public Lemma() {
     }
 
-    public Lemma(String lemma, int frequency) {
+    public Lemma(String lemma, int frequency, int siteId) {
         this.lemma = lemma;
         this.frequency = frequency;
+        this.siteId = siteId;
     }
 
     public int getId() {

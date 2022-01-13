@@ -1,89 +1,108 @@
 package com.egortroyan.searchengine;
-import com.egortroyan.searchengine.models.Field;
-import com.egortroyan.searchengine.models.Indexing;
-import com.egortroyan.searchengine.models.Lemma;
-import com.egortroyan.searchengine.models.Page;
+import com.egortroyan.searchengine.models.*;
 import com.egortroyan.searchengine.morphology.MorphologyAnalyzer;
-import com.egortroyan.searchengine.repo.FieldRepository;
-import com.egortroyan.searchengine.repo.IndexRepository;
-import com.egortroyan.searchengine.repo.LemmaRepository;
-import com.egortroyan.searchengine.repo.PageRepository;
+import com.egortroyan.searchengine.service.impl.RepositoriesServiceImpl;
 import com.egortroyan.searchengine.sitemap.SiteMapBuilder;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.UnsupportedMimeTypeException;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.*;
 
-@Service
-public class SiteIndexing {
-    private boolean isReady = false;
-    @Autowired
+//@Service
+//@Scope("prototype")
+public class SiteIndexing extends Thread{
+    private final Site site;
     SearchSettings searchSettings;
-    @Autowired
-    PageRepository pageRepository;
-    @Autowired
-    FieldRepository fieldRepository;
-    @Autowired
-    LemmaRepository lemmaRepository;
-    @Autowired
-    IndexRepository indexRepository;
+    RepositoriesServiceImpl repo;
+    private boolean allSite;
 
+    public SiteIndexing(Site site,
+                        SearchSettings settings,
+                        RepositoriesServiceImpl repositoriesService, boolean allSite){
+        this.site = site;
+        this.searchSettings = settings;
+        this.repo = repositoriesService;
+        this.allSite = allSite;
+    }
 
+    @Override
+    public void run() {
+        if (allSite) {
+            runAllIndexing();
+        } else {
+            runOneSiteIndexing(site.getUrl());
+        }
 
-    public void runAfterStartup(String searchUrl) {
-        System.out.println(searchSettings.getSite().toString());
-        fieldInit();
-        SiteMapBuilder builder = new SiteMapBuilder(searchUrl);
+    }
+
+    public void runAllIndexing() {
+        site.setStatus(Status.INDEXING);
+        site.setStatusTime(new Date());
+        repo.save(site);
+        SiteMapBuilder builder = new SiteMapBuilder(site.getUrl());
         builder.builtSiteMap();
         List<String> allSiteUrls = builder.getSiteMap();
-        List<Field> fieldList = getFieldListFromDB();
         for(String url : allSiteUrls) {
-            try {
-                Page page = getSearchPage(url, searchUrl);
-                TreeMap<String, Integer> map = new TreeMap<>();
-                TreeMap<String, Float> indexing = new TreeMap<>();
-                for (Field field : fieldList){
-                    String name = field.getName();
-                    float weight = field.getWeight();
-                    String stringByTeg = getStringByTeg(name, page.getContent());
-                    MorphologyAnalyzer analyzer = new MorphologyAnalyzer();
-                    TreeMap<String, Integer> tempMap = analyzer.textAnalyzer(stringByTeg);
-                    map.putAll(tempMap);
-                    indexing.putAll(indexingLemmas(tempMap, weight));
-                }
-                lemmaToDB(map);
-                map.clear();
-                pageRepository.save(page);
-                indexingToDb(indexing, page.getPath());
-                indexing.clear();
-            } catch (UnsupportedMimeTypeException e) {
-                System.out.println("Страница пропущена из за ошибки чтения:\n" + url);
-            }catch (IOException e) {
-                e.printStackTrace();
-            }
+            runOneSiteIndexing(url);
         }
-        isReady = true;
     }
 
-    private void fieldInit() {
-        Field fieldTitle = new Field("title", "title", 1.0f);
-        Field fieldBody = new Field("body", "body", 0.8f);
-        fieldRepository.save(fieldTitle);
-        fieldRepository.save(fieldBody);
+    public void runOneSiteIndexing(String searchUrl) {
+        site.setStatus(Status.INDEXING);
+        site.setStatusTime(new Date());
+        repo.save(site);
+        List<Field> fieldList = getFieldListFromDB();
+        try {
+            Page page = getSearchPage(searchUrl, site.getUrl(), site.getId());
+            Page checkPage = repo.getPage(searchUrl.replaceAll(site.getUrl(), ""));
+            if (checkPage != null){
+                System.out.println("Такая страница уже есть в базе, чистим базу:\n" + searchUrl);
+                prepareDbToIndexing(checkPage);
+            }
+            TreeMap<String, Integer> map = new TreeMap<>();
+            TreeMap<String, Float> indexing = new TreeMap<>();
+            for (Field field : fieldList){
+                String name = field.getName();
+                float weight = field.getWeight();
+                String stringByTeg = getStringByTeg(name, page.getContent());
+                MorphologyAnalyzer analyzer = new MorphologyAnalyzer();
+                TreeMap<String, Integer> tempMap = analyzer.textAnalyzer(stringByTeg);
+                map.putAll(tempMap);
+                indexing.putAll(indexingLemmas(tempMap, weight));
+            }
+            lemmaToDB(map, site.getId());
+            map.clear();
+            pageToDb(page);
+            indexingToDb(indexing, page.getPath());
+            indexing.clear();
+        }
+        catch (UnsupportedMimeTypeException e) {
+            site.setLastError("Формат страницы не поддерживается: " + searchUrl);
+            site.setStatus(Status.FAILED);
+        }
+        catch (IOException e) {
+            site.setLastError("Ошибка чтения страницы: " + searchUrl + "\n" + e.getMessage());
+            site.setStatus(Status.FAILED);
+        }
+        finally {
+            repo.save(site);
+        }
+        site.setStatus(Status.INDEXED);
+        repo.save(site);
     }
 
-    private Page getSearchPage(String url, String baseUrl) throws IOException {
+
+    private synchronized void pageToDb(Page page) {
+        if(repo.getPage(page.getPath()) == null) {
+            repo.save(page);
+        }
+    }
+
+    private Page getSearchPage(String url, String baseUrl, int siteId) throws IOException {
         Page page = new Page();
         Connection.Response response = Jsoup.connect(url)
                 .userAgent(searchSettings.getAgent())
@@ -91,17 +110,18 @@ public class SiteIndexing {
                 .execute();
 
         String content = response.body();
-        String path = url.replaceAll(baseUrl, "/");
+        String path = url.replaceAll(baseUrl, "");
         int code = response.statusCode();
         page.setCode(code);
         page.setPath(path);
         page.setContent(content);
+        page.setSiteId(siteId);
         return page;
     }
 
     private List<Field> getFieldListFromDB() {
         List<Field> list = new ArrayList<>();
-        Iterable<Field> iterable = fieldRepository.findAll();
+        Iterable<Field> iterable = repo.getAllField();
         iterable.forEach(list::add);
         return list;
     }
@@ -118,17 +138,17 @@ public class SiteIndexing {
         return string;
     }
 
-    private void lemmaToDB (TreeMap<String, Integer> lemmaMap) {
+    private synchronized void lemmaToDB (TreeMap<String, Integer> lemmaMap, int siteId) {
         for (Map.Entry<String, Integer> lemma : lemmaMap.entrySet()) {
             String lemmaName = lemma.getKey();
-            Lemma lemma1 = lemmaRepository.findByLemma(lemmaName);
+            Lemma lemma1 = repo.getLemma(lemmaName);
             if (lemma1 == null){
-                Lemma newLemma = new Lemma(lemmaName, 1);
-                lemmaRepository.save(newLemma);
+                Lemma newLemma = new Lemma(lemmaName, 1, siteId);
+                repo.save(newLemma);
             } else {
                 int count = lemma1.getFrequency();
                 lemma1.setFrequency(++count);
-                lemmaRepository.save(lemma1);
+                repo.save(lemma1);
             }
         }
     }
@@ -148,19 +168,23 @@ public class SiteIndexing {
         return map;
     }
 
-    private void indexingToDb (TreeMap<String, Float> map, String path){
+    private synchronized void indexingToDb (TreeMap<String, Float> map, String path){
         for (Map.Entry<String, Float> lemma : map.entrySet()) {
-            int pathId = pageRepository.findByPath(path).getId();
+            int pathId = repo.getPage(path).getId();
             String lemmaName = lemma.getKey();
-            Lemma lemma1 = lemmaRepository.findByLemma(lemmaName);
+            Lemma lemma1 = repo.getLemma(lemmaName);
             int lemmaId = lemma1.getId();
-            System.out.println(lemmaId);
             Indexing indexing = new Indexing(pathId, lemmaId, lemma.getValue());
-            indexRepository.save(indexing);
+            repo.save(indexing);
         }
     }
 
-    public boolean isSiteIndexingReady() {
-        return isReady;
+    private void prepareDbToIndexing(Page page) {
+        //Page page = repositoriesService.getPage(url.replaceAll(baseUrl, ""));
+        List<Indexing> indexingList = repo.getAllIndexingByPageId(page.getId());
+        List<Lemma> allLemmasIdByPage = repo.findLemmasByIndexing(indexingList);
+        repo.deleteAllLemmas(allLemmasIdByPage);
+        repo.deleteAllIndexing(indexingList);
+        repo.deletePage(page);
     }
 }

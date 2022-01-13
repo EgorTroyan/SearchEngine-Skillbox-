@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SiteRepository extends CrudRepository<Site, Integer> {
+    Site findByUrl (String url);
 }

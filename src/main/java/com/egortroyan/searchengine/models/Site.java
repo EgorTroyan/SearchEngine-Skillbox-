@@ -6,7 +6,7 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name="Search_page")
+@Table(name="Search_site")
 public class Site {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

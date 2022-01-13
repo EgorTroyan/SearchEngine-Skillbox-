@@ -2,56 +2,83 @@ package com.egortroyan.searchengine;
 
 import com.egortroyan.searchengine.models.*;
 import com.egortroyan.searchengine.morphology.MorphologyAnalyzer;
-import com.egortroyan.searchengine.repo.FieldRepository;
-import com.egortroyan.searchengine.repo.IndexRepository;
-import com.egortroyan.searchengine.repo.LemmaRepository;
-import com.egortroyan.searchengine.repo.PageRepository;
+import com.egortroyan.searchengine.service.impl.RepositoriesServiceImpl;
+import com.egortroyan.searchengine.service.responses.SearchResponseService;
+import com.egortroyan.searchengine.service.searchResponseEntity.SearchData;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @Component
 public class Search {
     @Autowired
-    PageRepository pageRepository;
-    @Autowired
-    LemmaRepository lemmaRepository;
-    @Autowired
-    IndexRepository indexRepository;
+    RepositoriesServiceImpl repo;
 
     public Search() {
     }
 
-    public List<Response> searching(Request request) throws IOException {
-        List<Response> responses = new ArrayList<>();
+    public SearchResponseService searchService (Request request, String url, int offset, int limit) throws IOException {
+        //boolean result = false;
+        int count;
+        List<SearchData> list = searching(request, url);
+        if (list.isEmpty()){
+            return new SearchResponseService(false);
+        }
+        if(limit + offset < list.size()) {
+            count = limit;
+        } else {
+            count = list.size() - 1 - offset;
+        }
+        SearchData[] searchData = new SearchData[count];
+        for (int i = offset; i < count; i++) {
+            searchData[i] = list.get(i);
+        }
+
+        return new SearchResponseService(true, count, searchData);
+    }
+
+    public List<SearchData> searching(Request request, String siteUrl) throws IOException {
+        int siteId = 0;
+        if (siteUrl != null){
+            siteId = repo.getSite(siteUrl).getId();
+        }
+
+        List<SearchData> responses = new ArrayList<>();
         List<Lemma> reqLemmas = sortedReqLemmas(request);
         List<Integer> pageIndexes = new ArrayList<>();
         if (!(reqLemmas == null)) {
-            List<Indexing> indexingList = indexRepository.findByLemmaId(reqLemmas.get(0).getId());
-            indexingList.forEach(indexing ->
-                    pageIndexes.add(indexing.getPageId())
+            List<Indexing> indexingList = repo.getAllIndexingByLemmaId(reqLemmas.get(0).getId());
+            indexingList.forEach(indexing -> {
+                        pageIndexes.add(indexing.getPageId());
+                    }
+
             );
             for (Lemma lemma : reqLemmas) {
-                if (!pageIndexes.isEmpty()) {
-                    List<Indexing> indexingList2 = indexRepository.findByLemmaId(lemma.getId());
+                if (!pageIndexes.isEmpty() && lemma.getId() != reqLemmas.get(0).getId()) {
+                    List<Indexing> indexingList2 = repo.getAllIndexingByLemmaId(lemma.getId());
                     List<Integer> tempList = new ArrayList<>();
                     indexingList2.forEach(indexing -> tempList.add(indexing.getPageId()));
                     pageIndexes.retainAll(tempList);
-                } else {
-                    return responses;
                 }
             }
             Map<Page, Double> pageAbsRelevance = new HashMap<>();
             HashMap<Page, Double> pageRelevance = new HashMap<>();
             double maxRel = 0.0;
             for (Integer p : pageIndexes) {
-                Optional<Page> opPage = pageRepository.findById(p);
+                Optional<Page> opPage;
+                if (siteUrl == null) {
+                    opPage = repo.findPageById(p);
+                } else {
+                    opPage = repo.findPageByPageIdAndSiteId(p, siteId);
+                }
                 if (opPage.isPresent()) {
                     Page page = opPage.get();
                     double r = getAbsRelevance(page, reqLemmas);
@@ -63,9 +90,9 @@ public class Search {
             for (Map.Entry<Page, Double> abs : pageAbsRelevance.entrySet()) {
                 pageRelevance.put(abs.getKey(), abs.getValue() / maxRel);
             }
-            LinkedHashMap<Page, Double> sortedByRankPages = sortedByRelevancePageMap(pageRelevance);
+            LinkedHashMap<Page, Double> sortedByRankPages = (LinkedHashMap<Page, Double>) sortMapByValue(pageRelevance);
             for (Map.Entry<Page, Double> page : sortedByRankPages.entrySet()) {
-                Response response = getResponseByPage(page.getKey(), request, page.getValue());
+                SearchData response = getResponseByPage(page.getKey(), request, page.getValue());
                 responses.add(response);
             }
         }
@@ -77,14 +104,14 @@ public class Search {
         List<Lemma> lemmaList = new ArrayList<>();
         List<String> list = request.getReqLemmas();
         for(String s : list) {
-            Lemma lemma = lemmaRepository.findByLemma(s);
+            Lemma lemma = repo.getLemma(s);
             if (lemma == null){
                 return null;
             } else {
                 lemmaList.add(lemma);
             }
         }
-        lemmaList.sort((o1, o2) -> o1.getFrequency() - o2.getFrequency());
+        lemmaList.sort(Comparator.comparingInt(Lemma::getFrequency));
         return lemmaList;
     }
 
@@ -93,35 +120,23 @@ public class Search {
         int pageId = page.getId();
         for (Lemma lemma : lemmas) {
             int lemmaId = lemma.getId();
-            Indexing indexing = indexRepository.findByLemmaIdAndPageId(lemmaId, pageId);
+            Indexing indexing = repo.getIndexing(lemmaId, pageId);
             r = r + indexing.getRank();
         }
         return r;
     }
 
-    private LinkedHashMap<Page, Double> sortedByRelevancePageMap (HashMap<Page, Double> map) {
-        SortedSet<Map.Entry<Page, Double>> sortedset = new TreeSet<>(
-                new Comparator<Map.Entry<Page, Double>>() {
-                    @Override
-                    public int compare(Map.Entry<Page, Double> e1,
-                                       Map.Entry<Page, Double> e2) {
-                        return e1.getValue().compareTo(e2.getValue());
-                    }
-                });
 
-        sortedset.addAll(map.entrySet());
-        LinkedHashMap<Page, Double> sortedMap = new LinkedHashMap<>();
-        for (Map.Entry<Page, Double> m : sortedset) {
-            sortedMap.put(m.getKey(), m.getValue());
-        }
-        return sortedMap;
-    }
-
-    private Response getResponseByPage (Page page, Request request, double relevance) throws IOException {
-        Response response = new Response();
+    private SearchData getResponseByPage (Page page, Request request, double relevance) throws IOException {
+        SearchData response = new SearchData();
+        Site site = repo.getSite(page.getSiteId());
+        String siteUrl = site.getUrl();
+        String siteName = site.getName();
         String uri = page.getPath();
         String title = getTitle(page.getContent());
         String snippet = getSnippet(page.getContent(), request);
+        response.setSite(siteUrl);
+        response.setSiteName(siteName);
         response.setRelevance(relevance);
         response.setUri(uri);
         response.setTitle(title);
@@ -143,7 +158,6 @@ public class Search {
 
     private String getSnippet (String html, Request request) throws IOException {
         MorphologyAnalyzer analyzer = new MorphologyAnalyzer();
-        String snippet = "";
         String string = "";
         Document document = Jsoup.parse(html);
         Elements titleElements = document.select("title");
@@ -155,35 +169,82 @@ public class Search {
             string = builder.toString();
         }
         List<String> req = request.getReqLemmas();
-        ArrayList<Integer>[] reqIndexes = new ArrayList[req.size()];
-        for (int i = 0; i < reqIndexes.length; i++) {
-            reqIndexes[i] = analyzer.findLemmaIndexInText(string, req.get(i));
+        Set<Integer> integerList = new TreeSet<>();
+        for (String s : req) {
+            integerList.addAll(analyzer.findLemmaIndexInText(string, s));
         }
-        int endSnippetIndex;
-        int snippetLength = request.getReq().length();
-        int first;
-        int last;
-        for (int i = 0; i < reqIndexes.length - 1; i++) {
-            for (int j = 0; j < reqIndexes[i + 1].size(); j++) {
-                first = reqIndexes[i].get(i);
-                last = reqIndexes[i + 1].get(j);
-                if (first == last - req.get(i).length() - 1){
-                    endSnippetIndex = last + req.get(i).length();
-                    snippet = string.substring(
-                            string.lastIndexOf(" ", endSnippetIndex - snippetLength - 20),
-                            string.indexOf(" ", endSnippetIndex + 10));
-                    break;
-                }
+        List<TreeSet<Integer>> indexesList = getSearchingIndexes(string, integerList);
+        StringBuilder builder1 = new StringBuilder();
+        for (TreeSet<Integer> set : indexesList) {
+            int from = set.first();
+            int to = set.last();
+            Pattern pattern = Pattern.compile("\\p{Punct}|\\s");
+            Matcher matcher = pattern.matcher(string.substring(to));
+            int offset = 0;
+            if (matcher.find()){
+                offset = matcher.end();
+            }
+            builder1.append("<b>")
+                    .append(string, from, to + offset)
+                    .append("</b>");
+            if (!((string.length() - to) < 30)) {
+                builder1.append(string, to + offset, string.indexOf(" ", to + offset + 30))
+                        .append("... ");
             }
         }
-        StringBuilder builder1 = new StringBuilder();
-        builder1.append("...")
-                .append("<b>")
-                .append(snippet)
-                .append("</b>")
-                .append("...");
         return builder1.toString();
     }
 
+    private List<TreeSet<Integer>> getSearchingIndexes (String string, Set<Integer> indexesOfBolt) {
+        ArrayList<Integer> indexes = new ArrayList<>(indexesOfBolt);
+        List<TreeSet<Integer>> list = new ArrayList<>();
+        TreeSet<Integer> temp = new TreeSet<>();
+        for (int i = 0; i < indexes.size(); i++) {
+            String s = string.substring(indexes.get(i));
+            int end = s.indexOf(" ");
+            if ((i + 1) <= indexes.size() - 1 && (indexes.get(i + 1) - indexes.get(i)) < end + 5){
+                temp.add(indexes.get(i));
+                temp.add(indexes.get(i + 1));
+            }
+             else {
+                if (temp.isEmpty()) {
+                    temp.add(indexes.get(i));
+                    list.add(temp);
+                    temp = new TreeSet<>();
+                } else {
+                    list.add(temp);
+                    temp = new TreeSet<>();
+                    temp.add(indexes.get(i));
+                    list.add(temp);
+                    temp = new TreeSet<>();
+                }
+            }
+        }
+        list.sort(new Comparator<Set<Integer>>() {
+            @Override
+            public int compare(Set<Integer> o1, Set<Integer> o2) {
+                return o2.size() - o1.size();
+            }
+        });
+        ArrayList<TreeSet<Integer>> searchingIndexes = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            if(list.size() > i) {
+                searchingIndexes.add(list.get(i));
+            }
+        }
+        return searchingIndexes;
+    }
 
+    /* thanks VeLKerr from stackoverflow for sortMapByValue */
+    public  <K, V extends Comparable<? super V>> Map<K, V>
+    sortMapByValue(Map<K, V> map )
+    {
+        Map<K,V> result = new LinkedHashMap<>();
+        Stream<Map.Entry<K,V>> st = map.entrySet().stream();
+
+        st.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .forEach(e ->result.put(e.getKey(),e.getValue()));
+
+        return result;
+    }
 }
