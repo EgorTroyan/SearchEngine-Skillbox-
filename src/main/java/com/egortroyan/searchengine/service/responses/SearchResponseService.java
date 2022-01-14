@@ -2,10 +2,10 @@ package com.egortroyan.searchengine.service.responses;
 
 import com.egortroyan.searchengine.service.searchResponseEntity.SearchData;
 
-public class SearchResponseService {
-    boolean result;
-    int count;
-    SearchData[] data;
+public class SearchResponseService implements ResponseService {
+    private boolean result;
+    private int count;
+    private SearchData[] data;
 
     public SearchResponseService() {
     }
@@ -20,7 +20,7 @@ public class SearchResponseService {
         this.data = data;
     }
 
-    public boolean isResult() {
+    public boolean getResult() {
         return result;
     }
 

@@ -18,7 +18,7 @@ public class FieldRepoServiceImpl implements FieldRepositoryService {
     }
 
     @Override
-    public synchronized Field getFieldByName(String fieldName) {
+    public Field getFieldByName(String fieldName) {
         return fieldRepository.findByName(fieldName);
     }
     @Override
@@ -27,7 +27,7 @@ public class FieldRepoServiceImpl implements FieldRepositoryService {
     }
 
     @Override
-    public synchronized List<Field> getAllField() {
+    public List<Field> getAllField() {
         List<Field> list = new ArrayList<>();
         Iterable<Field> iterable = fieldRepository.findAll();
         iterable.forEach(list::add);

@@ -1,16 +1,15 @@
 package com.egortroyan.searchengine.service.responses;
 
-public class FalseResponseService extends ResponseService{
-    boolean result = false;
-    String error;
+public class FalseResponseService implements ResponseService {
+    private final String error;
 
     public FalseResponseService(String error) {
         this.error = error;
     }
 
     @Override
-    public boolean isResult() {
-        return result;
+    public boolean getResult() {
+        return false;
     }
 
     public String getError() {

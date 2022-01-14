@@ -1,8 +1,7 @@
 package com.egortroyan.searchengine.controllers;
 
-import com.egortroyan.searchengine.Statistic;
+import com.egortroyan.searchengine.service.StatisticService;
 import com.egortroyan.searchengine.service.responses.StatisticResponseService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,15 +9,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class StatisticController {
 
-    private final Statistic statistic;
+    private final StatisticService statistic;
 
-    public StatisticController(Statistic statistic) {
+    public StatisticController(StatisticService statistic) {
         this.statistic = statistic;
     }
 
     @GetMapping("/api/statistics")
     public ResponseEntity<Object> getStatistics(){
         StatisticResponseService stat = statistic.getStatistic();
-        return new ResponseEntity<Object> (stat, HttpStatus.OK);
+        return ResponseEntity.ok (stat);
     }
 }

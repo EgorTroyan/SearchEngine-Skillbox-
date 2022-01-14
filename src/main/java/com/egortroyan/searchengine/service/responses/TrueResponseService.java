@@ -1,10 +1,9 @@
 package com.egortroyan.searchengine.service.responses;
 
-public class TrueResponseService extends ResponseService {
-    boolean result = true;
+public class TrueResponseService implements ResponseService {
 
     @Override
-    public boolean isResult() {
-        return result;
+    public boolean getResult() {
+        return true;
     }
 }

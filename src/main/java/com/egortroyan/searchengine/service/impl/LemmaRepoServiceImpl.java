@@ -18,7 +18,7 @@ public class LemmaRepoServiceImpl implements LemmaRepositoryService {
     }
 
     @Override
-    public synchronized Lemma getLemma(String lemmaName) {
+    public Lemma getLemma(String lemmaName) {
         Lemma lemma = null;
         try{
             lemma = lemmaRepository.findByLemma(lemmaName);
@@ -45,7 +45,7 @@ public class LemmaRepoServiceImpl implements LemmaRepositoryService {
     }
 
     @Override
-    public void deleteAllLemmas(List<Lemma> lemmaList){
+    public synchronized void deleteAllLemmas(List<Lemma> lemmaList){
         lemmaRepository.deleteAll(lemmaList);
     }
 

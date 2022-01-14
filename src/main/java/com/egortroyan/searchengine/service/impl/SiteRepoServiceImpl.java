@@ -19,10 +19,10 @@ public class SiteRepoServiceImpl implements SiteRepositoryService {
     }
 
     @Override
-    public synchronized Site getSite(String url) {
+    public Site getSite(String url) {
         return siteRepository.findByUrl(url);
     }
-    public synchronized Site getSite(int siteId) {
+    public Site getSite(int siteId) {
         Optional<Site> optional = siteRepository.findById(siteId);
         Site site = null;
         if(optional.isPresent()){

@@ -3,7 +3,7 @@ package com.egortroyan.searchengine.service.responses;
 
 import com.egortroyan.searchengine.service.indexResponseEntity.Statistics;
 
-public class StatisticResponseService {
+public class StatisticResponseService implements ResponseService {
     boolean result;
     Statistics statistics;
 
@@ -12,7 +12,7 @@ public class StatisticResponseService {
         this.statistics = statistics;
     }
 
-    public boolean isResult() {
+    public boolean getResult() {
         return result;
     }
 

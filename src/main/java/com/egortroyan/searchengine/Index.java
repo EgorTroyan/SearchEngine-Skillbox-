@@ -1,8 +1,9 @@
 package com.egortroyan.searchengine;
 
-import com.egortroyan.searchengine.models.*;
-import com.egortroyan.searchengine.service.impl.RepositoriesServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.egortroyan.searchengine.models.Field;
+import com.egortroyan.searchengine.models.Site;
+import com.egortroyan.searchengine.models.Status;
+import com.egortroyan.searchengine.service.*;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -12,10 +13,29 @@ import java.util.Map;
 
 @Component
 public class Index {
-    @Autowired
-    SearchSettings searchSettings;
-    @Autowired
-    RepositoriesServiceImpl repositoriesService;
+
+    private final SearchSettings searchSettings;
+
+    private final FieldRepositoryService fieldRepositoryService;
+    private final SiteRepositoryService siteRepositoryService;
+    private final IndexRepositoryService indexRepositoryService;
+    private final PageRepositoryService pageRepositoryService;
+    private final LemmaRepositoryService lemmaRepositoryService;
+
+    public Index(SearchSettings searchSettings,
+                 FieldRepositoryService fieldRepositoryService,
+                 SiteRepositoryService siteRepositoryService,
+                 IndexRepositoryService indexRepositoryService,
+                 PageRepositoryService pageRepositoryService,
+                 LemmaRepositoryService lemmaRepositoryService) {
+        this.searchSettings = searchSettings;
+        this.fieldRepositoryService = fieldRepositoryService;
+        this.siteRepositoryService = siteRepositoryService;
+        this.indexRepositoryService = indexRepositoryService;
+        this.pageRepositoryService = pageRepositoryService;
+        this.lemmaRepositoryService = lemmaRepositoryService;
+    }
+
     private final List<Thread> threads = new ArrayList<>();
 
 
@@ -34,7 +54,7 @@ public class Index {
     }
 
     public String checkedSiteIndexing(String url) throws InterruptedException {
-        List<Site> siteList = repositoriesService.getAllSites();
+        List<Site> siteList = siteRepositoryService.getAllSites();
         String baseUrl = "";
         for(Site site : siteList) {
             if(site.getStatus() != Status.INDEXED) {
@@ -47,17 +67,22 @@ public class Index {
         if(baseUrl.isEmpty()){
             return "not found";
         } else {
-            Site site = repositoriesService.getSite(baseUrl);
+            Site site = siteRepositoryService.getSite(baseUrl);
             site.setUrl(url);
             SiteIndexing indexing = new SiteIndexing(
                     site,
                     searchSettings,
-                    repositoriesService, false);
+                    fieldRepositoryService,
+                    siteRepositoryService,
+                    indexRepositoryService,
+                    pageRepositoryService,
+                    lemmaRepositoryService,
+                    false);
             indexing.start();
             threads.add(indexing);
             indexing.join();
             site.setUrl(baseUrl);
-            repositoriesService.save(site);
+            siteRepositoryService.save(site);
             return "true";
         }
     }
@@ -66,29 +91,37 @@ public class Index {
     private void fieldInit() {
         Field fieldTitle = new Field("title", "title", 1.0f);
         Field fieldBody = new Field("body", "body", 0.8f);
-        if (repositoriesService.getFieldByName("title") == null) {
-            repositoriesService.save(fieldTitle);
-            repositoriesService.save(fieldBody);
+        if (fieldRepositoryService.getFieldByName("title") == null) {
+            fieldRepositoryService.save(fieldTitle);
+            fieldRepositoryService.save(fieldBody);
         }
     }
 
     private boolean startSiteIndexing(Site site) throws InterruptedException {
-        Site site1 = repositoriesService.getSite(site.getUrl());
+        Site site1 = siteRepositoryService.getSite(site.getUrl());
         if (site1 == null) {
-            repositoriesService.save(site);
+            siteRepositoryService.save(site);
             SiteIndexing indexing = new SiteIndexing(
-                    repositoriesService.getSite(site.getUrl()),
+                    siteRepositoryService.getSite(site.getUrl()),
                     searchSettings,
-                    repositoriesService, true);
+                    fieldRepositoryService,
+                    siteRepositoryService,
+                    indexRepositoryService,
+                    pageRepositoryService,
+                    lemmaRepositoryService, true);
             indexing.start();
             threads.add(indexing);
             return true;
         } else {
             if (!site1.getStatus().equals(Status.INDEXING)){
                 SiteIndexing indexing = new SiteIndexing(
-                        repositoriesService.getSite(site.getUrl()),
+                        siteRepositoryService.getSite(site.getUrl()),
                         searchSettings,
-                        repositoriesService, true);
+                        fieldRepositoryService,
+                        siteRepositoryService,
+                        indexRepositoryService,
+                        pageRepositoryService,
+                        lemmaRepositoryService, true);
                 indexing.start();
                 threads.add(indexing);
                 return true;
@@ -108,10 +141,10 @@ public class Index {
             }
         }
         if (isThreadAlive){
-            List<Site> siteList = repositoriesService.getAllSites();
+            List<Site> siteList = siteRepositoryService.getAllSites();
             for(Site site : siteList) {
                 site.setStatus(Status.FAILED);
-                repositoriesService.save(site);
+                siteRepositoryService.save(site);
             }
         }
         return isThreadAlive;

@@ -2,14 +2,14 @@ package com.egortroyan.searchengine;
 
 import com.egortroyan.searchengine.models.*;
 import com.egortroyan.searchengine.morphology.MorphologyAnalyzer;
-import com.egortroyan.searchengine.service.impl.RepositoriesServiceImpl;
+import com.egortroyan.searchengine.service.*;
 import com.egortroyan.searchengine.service.responses.SearchResponseService;
 import com.egortroyan.searchengine.service.searchResponseEntity.SearchData;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.*;
@@ -17,16 +17,25 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-@Component
+@Service
 public class Search {
-    @Autowired
-    RepositoriesServiceImpl repo;
 
-    public Search() {
+    private final SiteRepositoryService siteRepositoryService;
+    private final IndexRepositoryService indexRepositoryService;
+    private final PageRepositoryService pageRepositoryService;
+    private final LemmaRepositoryService lemmaRepositoryService;
+
+    public Search(SiteRepositoryService siteRepositoryService,
+                  IndexRepositoryService indexRepositoryService,
+                  PageRepositoryService pageRepositoryService,
+                  LemmaRepositoryService lemmaRepositoryService) {
+        this.siteRepositoryService = siteRepositoryService;
+        this.indexRepositoryService = indexRepositoryService;
+        this.pageRepositoryService = pageRepositoryService;
+        this.lemmaRepositoryService = lemmaRepositoryService;
     }
 
     public SearchResponseService searchService (Request request, String url, int offset, int limit) throws IOException {
-        //boolean result = false;
         int count;
         List<SearchData> list = searching(request, url);
         if (list.isEmpty()){
@@ -45,17 +54,17 @@ public class Search {
         return new SearchResponseService(true, count, searchData);
     }
 
-    public List<SearchData> searching(Request request, String siteUrl) throws IOException {
+    private List<SearchData> searching(Request request, String siteUrl) throws IOException {
         int siteId = 0;
         if (siteUrl != null){
-            siteId = repo.getSite(siteUrl).getId();
+            siteId = siteRepositoryService.getSite(siteUrl).getId();
         }
 
         List<SearchData> responses = new ArrayList<>();
         List<Lemma> reqLemmas = sortedReqLemmas(request);
         List<Integer> pageIndexes = new ArrayList<>();
         if (!(reqLemmas == null)) {
-            List<Indexing> indexingList = repo.getAllIndexingByLemmaId(reqLemmas.get(0).getId());
+            List<Indexing> indexingList = indexRepositoryService.getAllIndexingByLemmaId(reqLemmas.get(0).getId());
             indexingList.forEach(indexing -> {
                         pageIndexes.add(indexing.getPageId());
                     }
@@ -63,7 +72,7 @@ public class Search {
             );
             for (Lemma lemma : reqLemmas) {
                 if (!pageIndexes.isEmpty() && lemma.getId() != reqLemmas.get(0).getId()) {
-                    List<Indexing> indexingList2 = repo.getAllIndexingByLemmaId(lemma.getId());
+                    List<Indexing> indexingList2 = indexRepositoryService.getAllIndexingByLemmaId(lemma.getId());
                     List<Integer> tempList = new ArrayList<>();
                     indexingList2.forEach(indexing -> tempList.add(indexing.getPageId()));
                     pageIndexes.retainAll(tempList);
@@ -75,9 +84,9 @@ public class Search {
             for (Integer p : pageIndexes) {
                 Optional<Page> opPage;
                 if (siteUrl == null) {
-                    opPage = repo.findPageById(p);
+                    opPage = pageRepositoryService.findPageById(p);
                 } else {
-                    opPage = repo.findPageByPageIdAndSiteId(p, siteId);
+                    opPage = pageRepositoryService.findPageByPageIdAndSiteId(p, siteId);
                 }
                 if (opPage.isPresent()) {
                     Page page = opPage.get();
@@ -104,7 +113,7 @@ public class Search {
         List<Lemma> lemmaList = new ArrayList<>();
         List<String> list = request.getReqLemmas();
         for(String s : list) {
-            Lemma lemma = repo.getLemma(s);
+            Lemma lemma = lemmaRepositoryService.getLemma(s);
             if (lemma == null){
                 return null;
             } else {
@@ -120,7 +129,7 @@ public class Search {
         int pageId = page.getId();
         for (Lemma lemma : lemmas) {
             int lemmaId = lemma.getId();
-            Indexing indexing = repo.getIndexing(lemmaId, pageId);
+            Indexing indexing = indexRepositoryService.getIndexing(lemmaId, pageId);
             r = r + indexing.getRank();
         }
         return r;
@@ -129,7 +138,7 @@ public class Search {
 
     private SearchData getResponseByPage (Page page, Request request, double relevance) throws IOException {
         SearchData response = new SearchData();
-        Site site = repo.getSite(page.getSiteId());
+        Site site = siteRepositoryService.getSite(page.getSiteId());
         String siteUrl = site.getUrl();
         String siteName = site.getName();
         String uri = page.getPath();

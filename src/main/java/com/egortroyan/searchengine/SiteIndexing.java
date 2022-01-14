@@ -1,7 +1,8 @@
 package com.egortroyan.searchengine;
+
 import com.egortroyan.searchengine.models.*;
 import com.egortroyan.searchengine.morphology.MorphologyAnalyzer;
-import com.egortroyan.searchengine.service.impl.RepositoriesServiceImpl;
+import com.egortroyan.searchengine.service.*;
 import com.egortroyan.searchengine.sitemap.SiteMapBuilder;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -12,22 +13,35 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.util.*;
 
-//@Service
-//@Scope("prototype")
 public class SiteIndexing extends Thread{
     private final Site site;
-    SearchSettings searchSettings;
-    RepositoriesServiceImpl repo;
+    private final SearchSettings searchSettings;
+    private final FieldRepositoryService fieldRepositoryService;
+    private final SiteRepositoryService siteRepositoryService;
+    private final IndexRepositoryService indexRepositoryService;
+    private final PageRepositoryService pageRepositoryService;
+    private final LemmaRepositoryService lemmaRepositoryService;
     private boolean allSite;
 
     public SiteIndexing(Site site,
-                        SearchSettings settings,
-                        RepositoriesServiceImpl repositoriesService, boolean allSite){
+                        SearchSettings searchSettings,
+                        FieldRepositoryService fieldRepositoryService,
+                        SiteRepositoryService siteRepositoryService,
+                        IndexRepositoryService indexRepositoryService,
+                        PageRepositoryService pageRepositoryService,
+                        LemmaRepositoryService lemmaRepositoryService,
+                        boolean allSite) {
         this.site = site;
-        this.searchSettings = settings;
-        this.repo = repositoriesService;
+        this.searchSettings = searchSettings;
+        this.fieldRepositoryService = fieldRepositoryService;
+        this.siteRepositoryService = siteRepositoryService;
+        this.indexRepositoryService = indexRepositoryService;
+        this.pageRepositoryService = pageRepositoryService;
+        this.lemmaRepositoryService = lemmaRepositoryService;
         this.allSite = allSite;
     }
+
+
 
     @Override
     public void run() {
@@ -42,7 +56,7 @@ public class SiteIndexing extends Thread{
     public void runAllIndexing() {
         site.setStatus(Status.INDEXING);
         site.setStatusTime(new Date());
-        repo.save(site);
+        siteRepositoryService.save(site);
         SiteMapBuilder builder = new SiteMapBuilder(site.getUrl());
         builder.builtSiteMap();
         List<String> allSiteUrls = builder.getSiteMap();
@@ -54,11 +68,11 @@ public class SiteIndexing extends Thread{
     public void runOneSiteIndexing(String searchUrl) {
         site.setStatus(Status.INDEXING);
         site.setStatusTime(new Date());
-        repo.save(site);
+        siteRepositoryService.save(site);
         List<Field> fieldList = getFieldListFromDB();
         try {
             Page page = getSearchPage(searchUrl, site.getUrl(), site.getId());
-            Page checkPage = repo.getPage(searchUrl.replaceAll(site.getUrl(), ""));
+            Page checkPage = pageRepositoryService.getPage(searchUrl.replaceAll(site.getUrl(), ""));
             if (checkPage != null){
                 System.out.println("Такая страница уже есть в базе, чистим базу:\n" + searchUrl);
                 prepareDbToIndexing(checkPage);
@@ -89,16 +103,16 @@ public class SiteIndexing extends Thread{
             site.setStatus(Status.FAILED);
         }
         finally {
-            repo.save(site);
+            siteRepositoryService.save(site);
         }
         site.setStatus(Status.INDEXED);
-        repo.save(site);
+        siteRepositoryService.save(site);
     }
 
 
     private synchronized void pageToDb(Page page) {
-        if(repo.getPage(page.getPath()) == null) {
-            repo.save(page);
+        if(pageRepositoryService.getPage(page.getPath()) == null) {
+            pageRepositoryService.save(page);
         }
     }
 
@@ -121,7 +135,7 @@ public class SiteIndexing extends Thread{
 
     private List<Field> getFieldListFromDB() {
         List<Field> list = new ArrayList<>();
-        Iterable<Field> iterable = repo.getAllField();
+        Iterable<Field> iterable = fieldRepositoryService.getAllField();
         iterable.forEach(list::add);
         return list;
     }
@@ -141,14 +155,14 @@ public class SiteIndexing extends Thread{
     private synchronized void lemmaToDB (TreeMap<String, Integer> lemmaMap, int siteId) {
         for (Map.Entry<String, Integer> lemma : lemmaMap.entrySet()) {
             String lemmaName = lemma.getKey();
-            Lemma lemma1 = repo.getLemma(lemmaName);
+            Lemma lemma1 = lemmaRepositoryService.getLemma(lemmaName);
             if (lemma1 == null){
                 Lemma newLemma = new Lemma(lemmaName, 1, siteId);
-                repo.save(newLemma);
+                lemmaRepositoryService.save(newLemma);
             } else {
                 int count = lemma1.getFrequency();
                 lemma1.setFrequency(++count);
-                repo.save(lemma1);
+                lemmaRepositoryService.save(lemma1);
             }
         }
     }
@@ -170,21 +184,20 @@ public class SiteIndexing extends Thread{
 
     private synchronized void indexingToDb (TreeMap<String, Float> map, String path){
         for (Map.Entry<String, Float> lemma : map.entrySet()) {
-            int pathId = repo.getPage(path).getId();
+            int pathId = pageRepositoryService.getPage(path).getId();
             String lemmaName = lemma.getKey();
-            Lemma lemma1 = repo.getLemma(lemmaName);
+            Lemma lemma1 = lemmaRepositoryService.getLemma(lemmaName);
             int lemmaId = lemma1.getId();
             Indexing indexing = new Indexing(pathId, lemmaId, lemma.getValue());
-            repo.save(indexing);
+            indexRepositoryService.save(indexing);
         }
     }
 
     private void prepareDbToIndexing(Page page) {
-        //Page page = repositoriesService.getPage(url.replaceAll(baseUrl, ""));
-        List<Indexing> indexingList = repo.getAllIndexingByPageId(page.getId());
-        List<Lemma> allLemmasIdByPage = repo.findLemmasByIndexing(indexingList);
-        repo.deleteAllLemmas(allLemmasIdByPage);
-        repo.deleteAllIndexing(indexingList);
-        repo.deletePage(page);
+        List<Indexing> indexingList = indexRepositoryService.getAllIndexingByPageId(page.getId());
+        List<Lemma> allLemmasIdByPage = lemmaRepositoryService.findLemmasByIndexing(indexingList);
+        lemmaRepositoryService.deleteAllLemmas(allLemmasIdByPage);
+        indexRepositoryService.deleteAllIndexing(indexingList);
+        pageRepositoryService.deletePage(page);
     }
 }

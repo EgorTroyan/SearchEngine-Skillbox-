@@ -17,7 +17,7 @@ public class PageRepoServiceImpl implements PageRepositoryService {
     }
 
     @Override
-    public synchronized Page getPage(String pagePath) {
+    public Page getPage(String pagePath) {
         return pageRepository.findByPath(pagePath);
     }
 
@@ -27,12 +27,12 @@ public class PageRepoServiceImpl implements PageRepositoryService {
     }
 
     @Override
-    public synchronized Optional<Page> findPageById(int id) {
+    public Optional<Page> findPageById(int id) {
         return pageRepository.findById(id);
     }
 
     @Override
-    public synchronized Optional<Page> findPageByPageIdAndSiteId(int pageId, int siteId) {
+    public Optional<Page> findPageByPageIdAndSiteId(int pageId, int siteId) {
         return pageRepository.findByIdAndSiteId(pageId, siteId);
     }
 

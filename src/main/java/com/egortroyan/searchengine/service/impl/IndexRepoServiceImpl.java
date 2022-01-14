@@ -17,22 +17,22 @@ public class IndexRepoServiceImpl implements IndexRepositoryService {
     }
 
     @Override
-    public synchronized List<Indexing> getAllIndexingByLemmaId(int lemmaId) {
+    public List<Indexing> getAllIndexingByLemmaId(int lemmaId) {
         return indexRepository.findByLemmaId(lemmaId);
     }
 
     @Override
-    public synchronized List<Indexing> getAllIndexingByPageId(int pageId) {
+    public List<Indexing> getAllIndexingByPageId(int pageId) {
         return indexRepository.findByPageId(pageId);
     }
 
     @Override
-    public void deleteAllIndexing(List<Indexing> indexingList){
+    public synchronized void deleteAllIndexing(List<Indexing> indexingList){
         indexRepository.deleteAll(indexingList);
     }
 
     @Override
-    public synchronized Indexing getIndexing(int lemmaId, int pageId) {
+    public Indexing getIndexing(int lemmaId, int pageId) {
         Indexing indexing = null;
         try{
             indexing = indexRepository.findByLemmaIdAndPageId(lemmaId, pageId);
