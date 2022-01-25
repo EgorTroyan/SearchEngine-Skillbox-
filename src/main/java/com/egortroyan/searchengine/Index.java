@@ -141,6 +141,10 @@ public class Index {
 
     public boolean stopSiteIndexing(){
         boolean isThreadAlive = false;
+        if(executor.getActiveCount() == 0){
+            return false;
+        }
+
         executor.shutdownNow();
         try {
             isThreadAlive = executor.awaitTermination(5,TimeUnit.MINUTES);
