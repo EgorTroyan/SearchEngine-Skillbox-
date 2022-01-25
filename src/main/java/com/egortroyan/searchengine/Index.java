@@ -6,10 +6,8 @@ import com.egortroyan.searchengine.models.Status;
 import com.egortroyan.searchengine.service.*;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.*;
 
 @Component
 public class Index {
@@ -36,8 +34,8 @@ public class Index {
         this.lemmaRepositoryService = lemmaRepositoryService;
     }
 
-    private final List<Thread> threads = new ArrayList<>();
-
+    //private final List<Thread> threads = new ArrayList<>();
+    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(3);
 
     public boolean allSiteIndexing() throws InterruptedException {
         fieldInit();
@@ -45,6 +43,7 @@ public class Index {
         List<Site> siteList = getSiteListFromConfig();
         for (Site site : siteList) {
             isIndexing = startSiteIndexing(site);
+            //executor.shutdown();
             if (!isIndexing){
                 stopSiteIndexing();
                 return false;
@@ -78,9 +77,12 @@ public class Index {
                     pageRepositoryService,
                     lemmaRepositoryService,
                     false);
-            indexing.start();
-            threads.add(indexing);
-            indexing.join();
+            //indexing.start();
+            //threads.add(indexing);
+            //indexing.join();
+            //cleanTreadList();
+            executor.execute(indexing);
+           // executor.shutdown();
             site.setUrl(baseUrl);
             siteRepositoryService.save(site);
             return "true";
@@ -108,9 +110,12 @@ public class Index {
                     siteRepositoryService,
                     indexRepositoryService,
                     pageRepositoryService,
-                    lemmaRepositoryService, true);
-            indexing.start();
-            threads.add(indexing);
+                    lemmaRepositoryService,
+                    true);
+            //indexing.start();
+            //threads.add(indexing);
+            executor.execute(indexing);
+            //executor.shutdown();
             return true;
         } else {
             if (!site1.getStatus().equals(Status.INDEXING)){
@@ -121,9 +126,12 @@ public class Index {
                         siteRepositoryService,
                         indexRepositoryService,
                         pageRepositoryService,
-                        lemmaRepositoryService, true);
-                indexing.start();
-                threads.add(indexing);
+                        lemmaRepositoryService,
+                        true);
+                //indexing.start();
+                //threads.add(indexing);
+                executor.execute(indexing);
+               // executor.shutdown();
                 return true;
             } else {
                 return false;
@@ -133,13 +141,27 @@ public class Index {
 
     public boolean stopSiteIndexing(){
         boolean isThreadAlive = false;
-        for(Thread thread : threads) {
-            if(thread.isAlive()) {
-                System.out.println("Останавливаем поток" + thread);
-                isThreadAlive = true;
-                thread.interrupt();
-            }
+        executor.shutdownNow();
+        try {
+            isThreadAlive = executor.awaitTermination(5,TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
+//        for(Thread thread : threads) {
+//            if(thread.isAlive()) {
+//                System.out.println("Останавливаем поток" + thread);
+//
+//                thread.interrupt();
+//                while (thread.isInterrupted()){
+//                    try {
+//                        thread.join(1000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//                isThreadAlive = true;
+//            }
+//        }
         if (isThreadAlive){
             List<Site> siteList = siteRepositoryService.getAllSites();
             for(Site site : siteList) {
@@ -147,10 +169,13 @@ public class Index {
                 siteRepositoryService.save(site);
             }
         }
+        //cleanTreadList();
         return isThreadAlive;
     }
 
-
+//    private void cleanTreadList () {
+//        threads.removeIf(t -> !t.isAlive());
+//    }isAlive
 
     private List<Site> getSiteListFromConfig() {
         List<Site> siteList = new ArrayList<>();

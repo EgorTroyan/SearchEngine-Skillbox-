@@ -14,13 +14,18 @@ public class ParseUrl extends RecursiveTask<String> {
     public final static List<String> urlList = new Vector<>();
 
     private final String url;
+    private final boolean isInterrupted;
 
-    public ParseUrl(String url) {
+    public ParseUrl(String url, boolean isInterrupted) {
         this.url = url;
+        this.isInterrupted = isInterrupted;
     }
 
     @Override
     protected String compute() {
+        if(isInterrupted){
+            return "";
+        }
         StringBuilder result = new StringBuilder();
         result.append(url);
         try {
@@ -42,7 +47,7 @@ public class ParseUrl extends RecursiveTask<String> {
                         && !urlList.contains(link)
                 ) {
                     urlList.add(link);
-                    ParseUrl linkGraber = new ParseUrl(link);
+                    ParseUrl linkGraber = new ParseUrl(link, false);
                     linkGraber.fork();
                     linkGrabers.add(linkGraber);
                 }

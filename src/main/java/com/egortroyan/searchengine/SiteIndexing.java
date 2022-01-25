@@ -21,7 +21,7 @@ public class SiteIndexing extends Thread{
     private final IndexRepositoryService indexRepositoryService;
     private final PageRepositoryService pageRepositoryService;
     private final LemmaRepositoryService lemmaRepositoryService;
-    private boolean allSite;
+    private final boolean allSite;
 
     public SiteIndexing(Site site,
                         SearchSettings searchSettings,
@@ -45,10 +45,14 @@ public class SiteIndexing extends Thread{
 
     @Override
     public void run() {
-        if (allSite) {
-            runAllIndexing();
-        } else {
-            runOneSiteIndexing(site.getUrl());
+        try {
+            if (allSite) {
+                runAllIndexing();
+            } else {
+                runOneSiteIndexing(site.getUrl());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
     }
@@ -57,7 +61,7 @@ public class SiteIndexing extends Thread{
         site.setStatus(Status.INDEXING);
         site.setStatusTime(new Date());
         siteRepositoryService.save(site);
-        SiteMapBuilder builder = new SiteMapBuilder(site.getUrl());
+        SiteMapBuilder builder = new SiteMapBuilder(site.getUrl(), this.isInterrupted());
         builder.builtSiteMap();
         List<String> allSiteUrls = builder.getSiteMap();
         for(String url : allSiteUrls) {
@@ -110,7 +114,7 @@ public class SiteIndexing extends Thread{
     }
 
 
-    private synchronized void pageToDb(Page page) {
+    private void pageToDb(Page page) {
         if(pageRepositoryService.getPage(page.getPath()) == null) {
             pageRepositoryService.save(page);
         }
@@ -152,7 +156,7 @@ public class SiteIndexing extends Thread{
         return string;
     }
 
-    private synchronized void lemmaToDB (TreeMap<String, Integer> lemmaMap, int siteId) {
+    private void lemmaToDB (TreeMap<String, Integer> lemmaMap, int siteId) {
         for (Map.Entry<String, Integer> lemma : lemmaMap.entrySet()) {
             String lemmaName = lemma.getKey();
             Lemma lemma1 = lemmaRepositoryService.getLemma(lemmaName);
@@ -182,7 +186,7 @@ public class SiteIndexing extends Thread{
         return map;
     }
 
-    private synchronized void indexingToDb (TreeMap<String, Float> map, String path){
+    private void indexingToDb (TreeMap<String, Float> map, String path){
         for (Map.Entry<String, Float> lemma : map.entrySet()) {
             int pathId = pageRepositoryService.getPage(path).getId();
             String lemmaName = lemma.getKey();
