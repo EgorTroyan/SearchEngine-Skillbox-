@@ -1,13 +1,11 @@
 package com.egortroyan.searchengine;
 
 import com.egortroyan.searchengine.controllers.IndexingController;
-import com.egortroyan.searchengine.controllers.StatisticController;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -50,6 +48,6 @@ public class IndexingControllerTest {
                         .param("url", "http://localhost:8080/test")
                         .header("Authorization", "Basic YWRtaW46UXdlcnR5MjI="))
                 .andDo(print())
-                .andExpect(content().string(containsString("error")));
+                .andExpect(content().string(containsString("false")));
     }
 }
