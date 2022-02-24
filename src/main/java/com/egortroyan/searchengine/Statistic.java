@@ -10,13 +10,16 @@ import com.egortroyan.searchengine.service.indexResponseEntity.Detailed;
 import com.egortroyan.searchengine.service.indexResponseEntity.Statistics;
 import com.egortroyan.searchengine.service.indexResponseEntity.Total;
 import com.egortroyan.searchengine.service.responses.StatisticResponseService;
-import org.springframework.stereotype.Component;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class Statistic implements StatisticService {
+
+    private static final Logger log = LogManager.getLogger(Statistic.class);
 
     private final SiteRepositoryService siteRepositoryService;
     private final LemmaRepositoryService lemmaRepositoryService;
@@ -37,6 +40,7 @@ public class Statistic implements StatisticService {
         for (int i = 0; i < siteList.size(); i++) {
             detaileds[i] = getDetailed(siteList.get(i));
         }
+        log.info("Получение статистики.");
         return new StatisticResponseService(true, new Statistics(total, detaileds));
     }
 

@@ -78,7 +78,7 @@ public class SiteIndexing extends Thread{
             Page page = getSearchPage(searchUrl, site.getUrl(), site.getId());
             Page checkPage = pageRepositoryService.getPage(searchUrl.replaceAll(site.getUrl(), ""));
             if (checkPage != null){
-                System.out.println("Такая страница уже есть в базе, чистим базу:\n" + searchUrl);
+                //System.out.println("Такая страница уже есть в базе, чистим базу:\n" + searchUrl);
                 prepareDbToIndexing(checkPage);
             }
             TreeMap<String, Integer> map = new TreeMap<>();

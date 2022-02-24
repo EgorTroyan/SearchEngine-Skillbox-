@@ -3,6 +3,8 @@ package com.egortroyan.searchengine.sitemap;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,6 +15,7 @@ import java.util.concurrent.RecursiveTask;
 public class ParseUrl extends RecursiveTask<String> {
     public final static List<String> urlList = new Vector<>();
 
+    private final static Logger log = LogManager.getLogger(ParseUrl.class);
     private final String url;
     private final boolean isInterrupted;
 
@@ -30,11 +33,7 @@ public class ParseUrl extends RecursiveTask<String> {
         result.append(url);
         try {
             Thread.sleep(200);
-            Document doc = Jsoup.connect(url)
-                    .maxBodySize(0)
-                    .userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-                    .referrer("http://www.google.com")
-                    .get();
+            Document doc = getDocumentByUrl(url);
             Elements rootElements = doc.select("a");
 
             List<ParseUrl> linkGrabers = new ArrayList<>();
@@ -61,8 +60,17 @@ public class ParseUrl extends RecursiveTask<String> {
                 }
             }
         } catch (IOException | InterruptedException e) {
-            /*Пропускаем сайт не удовлетворяющий условиям*/;
+            log.warn("Ошибка парсинга сайта: " + url);
         }
         return result.toString();
+    }
+
+    protected Document getDocumentByUrl (String url) throws InterruptedException, IOException {
+        Thread.sleep(200);
+        return Jsoup.connect(url)
+                .maxBodySize(0)
+                .userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+                .referrer("http://www.google.com")
+                .get();
     }
 }

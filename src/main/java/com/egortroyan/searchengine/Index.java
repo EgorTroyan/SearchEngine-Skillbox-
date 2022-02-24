@@ -4,14 +4,22 @@ import com.egortroyan.searchengine.models.Field;
 import com.egortroyan.searchengine.models.Site;
 import com.egortroyan.searchengine.models.Status;
 import com.egortroyan.searchengine.service.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class Index {
 
+    private final static Logger log = LogManager.getLogger(Index.class);
     private final SearchSettings searchSettings;
 
     private final FieldRepositoryService fieldRepositoryService;
@@ -149,7 +157,7 @@ public class Index {
         try {
             isThreadAlive = executor.awaitTermination(5,TimeUnit.MINUTES);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.error("Ошибка закрытия потоков: " + e);
         }
 //        for(Thread thread : threads) {
 //            if(thread.isAlive()) {

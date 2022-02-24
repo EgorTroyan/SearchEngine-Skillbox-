@@ -1,5 +1,7 @@
 package com.egortroyan.searchengine.morphology;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.morphology.LuceneMorphology;
 import org.apache.lucene.morphology.WrongCharaterException;
 import org.apache.lucene.morphology.russian.RussianLuceneMorphology;
@@ -8,6 +10,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class MorphologyAnalyzer {
+    private static final Logger log = LogManager.getLogger(MorphologyAnalyzer.class);
     private static final Set<String> parts;
     private static LuceneMorphology morphology = null;
     private final TreeMap<String, Integer> map;
@@ -22,6 +25,7 @@ public class MorphologyAnalyzer {
             morphology = new RussianLuceneMorphology();
         } catch (IOException e) {
             e.printStackTrace();
+            log.error("Ошибка морфологического анализа." + e);
         }
     }
 
@@ -36,14 +40,13 @@ public class MorphologyAnalyzer {
             word = word.trim();
             try {
                 if (!isServiceParts(word)) {
-
                     List<String> words = morphology.getNormalForms(word);
                     for(String s : words) {
                         putWordsToMap(s);
                     }
                 }
             } catch (Exception ex) {
-                /*пропускаем все ошибки морфологического анализа*/
+                log.warn("Ошибка морфологического анализа. Пропущенные символы: " + word);
             }
         }
         return map;
@@ -60,7 +63,7 @@ public class MorphologyAnalyzer {
                     List<String> words = morphology.getNormalForms(word);
                     list.add(words.get(0));
                 } catch (WrongCharaterException ex) {
-                    /*пропускаем*/
+                    log.warn("Ошибка морфологического анализа. Пропущенные символы: " + word);
                 }
 
             }
@@ -78,7 +81,7 @@ public class MorphologyAnalyzer {
                 lemmas = morphology.getNormalForms(s1.toLowerCase(Locale.ROOT));
 
             } catch (Exception e) {
-                /*не слово, пропускаем, тк ищем слово*/
+                log.warn("Ошибка морфологического анализа. Пропущенные символы: " + s1);
             }
             for(String s2 : lemmas) {
                 if (s2.equals(lemma)){
@@ -102,7 +105,7 @@ public class MorphologyAnalyzer {
                 }
             }
         } catch (WrongCharaterException ex) {
-            /*пропускаем*/
+            log.warn("Ошибка морфологического анализа. Символы не могут быть проанализированны: " + word);
         }
 
         return is;
