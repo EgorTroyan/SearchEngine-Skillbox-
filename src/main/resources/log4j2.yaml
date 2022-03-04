@@ -1,8 +1,0 @@
-log4j:
-  rootLogger: INFO, file
-  appender:
-    file: org.apache.log4j.RollingFileAppender
-      File: D:/TMP/log_file.log
-      MaxFileSize: 1MB
-      layout: org.apache.log4j.PatternLayout
-        ConversionPattern: %d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n

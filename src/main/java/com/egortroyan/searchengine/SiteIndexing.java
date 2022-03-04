@@ -159,14 +159,18 @@ public class SiteIndexing extends Thread{
     private void lemmaToDB (TreeMap<String, Integer> lemmaMap, int siteId) {
         for (Map.Entry<String, Integer> lemma : lemmaMap.entrySet()) {
             String lemmaName = lemma.getKey();
-            Lemma lemma1 = lemmaRepositoryService.getLemma(lemmaName);
-            if (lemma1 == null){
+            List<Lemma> lemma1 = lemmaRepositoryService.getLemma(lemmaName);
+            if (lemma1.isEmpty()){
                 Lemma newLemma = new Lemma(lemmaName, 1, siteId);
                 lemmaRepositoryService.save(newLemma);
             } else {
-                int count = lemma1.getFrequency();
-                lemma1.setFrequency(++count);
-                lemmaRepositoryService.save(lemma1);
+                for(Lemma l : lemma1) {
+                    if (l.getSiteId() == siteId) {
+                        int count = l.getFrequency();
+                        l.setFrequency(++count);
+                        lemmaRepositoryService.save(l);
+                    }
+                }
             }
         }
     }
@@ -187,13 +191,20 @@ public class SiteIndexing extends Thread{
     }
 
     private void indexingToDb (TreeMap<String, Float> map, String path){
+        Page page = pageRepositoryService.getPage(path);
+        int pathId = page.getId();
+        int siteId = page.getSiteId();
         for (Map.Entry<String, Float> lemma : map.entrySet()) {
-            int pathId = pageRepositoryService.getPage(path).getId();
+
             String lemmaName = lemma.getKey();
-            Lemma lemma1 = lemmaRepositoryService.getLemma(lemmaName);
-            int lemmaId = lemma1.getId();
-            Indexing indexing = new Indexing(pathId, lemmaId, lemma.getValue());
-            indexRepositoryService.save(indexing);
+            List<Lemma> lemma1 = lemmaRepositoryService.getLemma(lemmaName);
+            for (Lemma l : lemma1) {
+                if (l.getSiteId() == siteId) {
+                    int lemmaId = l.getId();
+                    Indexing indexing = new Indexing(pathId, lemmaId, lemma.getValue());
+                    indexRepositoryService.save(indexing);
+                }
+            }
         }
     }
 

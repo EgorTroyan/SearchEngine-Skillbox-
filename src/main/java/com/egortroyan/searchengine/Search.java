@@ -63,13 +63,9 @@ public class Search {
         List<SearchData> responses = new ArrayList<>();
         List<Lemma> reqLemmas = sortedReqLemmas(request);
         List<Integer> pageIndexes = new ArrayList<>();
-        if (!(reqLemmas == null)) {
+        if (!reqLemmas.isEmpty()) {
             List<Indexing> indexingList = indexRepositoryService.getAllIndexingByLemmaId(reqLemmas.get(0).getId());
-            indexingList.forEach(indexing -> {
-                        pageIndexes.add(indexing.getPageId());
-                    }
-
-            );
+            indexingList.forEach(indexing -> pageIndexes.add(indexing.getPageId()));
             for (Lemma lemma : reqLemmas) {
                 if (!pageIndexes.isEmpty() && lemma.getId() != reqLemmas.get(0).getId()) {
                     List<Indexing> indexingList2 = indexRepositoryService.getAllIndexingByLemmaId(lemma.getId());
@@ -113,12 +109,12 @@ public class Search {
         List<Lemma> lemmaList = new ArrayList<>();
         List<String> list = request.getReqLemmas();
         for(String s : list) {
-            Lemma lemma = lemmaRepositoryService.getLemma(s);
-            if (lemma == null){
-                return null;
-            } else {
-                lemmaList.add(lemma);
-            }
+            lemmaList.addAll(lemmaRepositoryService.getLemma(s));
+//            if (lemma == null){
+//                return null;
+//            } else {
+//                lemmaList.addAll(lemma);
+//            }
         }
         lemmaList.sort(Comparator.comparingInt(Lemma::getFrequency));
         return lemmaList;

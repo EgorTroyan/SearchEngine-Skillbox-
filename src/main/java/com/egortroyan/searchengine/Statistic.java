@@ -10,8 +10,7 @@ import com.egortroyan.searchengine.service.indexResponseEntity.Detailed;
 import com.egortroyan.searchengine.service.indexResponseEntity.Statistics;
 import com.egortroyan.searchengine.service.indexResponseEntity.Total;
 import com.egortroyan.searchengine.service.responses.StatisticResponseService;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.commons.logging.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,7 +18,7 @@ import java.util.List;
 @Service
 public class Statistic implements StatisticService {
 
-    private static final Logger log = LogManager.getLogger(Statistic.class);
+    private static final Log log = LogFactory.getLog(Statistic.class);
 
     private final SiteRepositoryService siteRepositoryService;
     private final LemmaRepositoryService lemmaRepositoryService;

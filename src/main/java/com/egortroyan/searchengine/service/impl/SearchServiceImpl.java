@@ -5,8 +5,7 @@ import com.egortroyan.searchengine.models.Request;
 import com.egortroyan.searchengine.service.SearchService;
 import com.egortroyan.searchengine.service.responses.FalseResponseService;
 import com.egortroyan.searchengine.service.responses.ResponseService;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.commons.logging.*;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -14,7 +13,7 @@ import java.io.IOException;
 @Service
 public class SearchServiceImpl implements SearchService {
 
-    private static final Logger log = LogManager.getLogger(SearchServiceImpl.class);
+    private static final Log log = LogFactory.getLog(SearchServiceImpl.class);
 
     private final Search search;
 

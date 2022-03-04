@@ -5,8 +5,7 @@ import com.egortroyan.searchengine.service.IndexingService;
 import com.egortroyan.searchengine.service.responses.FalseResponseService;
 import com.egortroyan.searchengine.service.responses.ResponseService;
 import com.egortroyan.searchengine.service.responses.TrueResponseService;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.commons.logging.*;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,7 +13,7 @@ public class IndexingServiceImpl implements IndexingService {
 
     private final Index index;
 
-    private static final Logger log = LogManager.getLogger(IndexingServiceImpl.class);
+    private static final Log log = LogFactory.getLog(IndexingServiceImpl.class);
 
     public IndexingServiceImpl(Index index) {
         this.index = index;

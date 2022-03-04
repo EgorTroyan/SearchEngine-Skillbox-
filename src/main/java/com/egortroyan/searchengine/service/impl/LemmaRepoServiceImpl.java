@@ -18,15 +18,15 @@ public class LemmaRepoServiceImpl implements LemmaRepositoryService {
     }
 
     @Override
-    public Lemma getLemma(String lemmaName) {
-        Lemma lemma = null;
+    public List<Lemma> getLemma(String lemmaName) {
+        List<Lemma> lemmas = null;
         try{
-            lemma = lemmaRepository.findByLemma(lemmaName);
+            lemmas = lemmaRepository.findByLemma(lemmaName);
         } catch (Exception e) {
             System.out.println(lemmaName);
             e.printStackTrace();
         }
-        return lemma;
+        return lemmas;
     }
 
     @Override

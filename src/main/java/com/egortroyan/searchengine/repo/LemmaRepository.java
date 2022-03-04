@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 
 public interface LemmaRepository extends CrudRepository<Lemma, Integer> {
-    Lemma findByLemma (String lemma);
+    List<Lemma> findByLemma (String lemma);
 
     @Query(value = "SELECT * from search_lemma WHERE id IN(:id)", nativeQuery = true)
     List<Lemma> findById (int[] id);
