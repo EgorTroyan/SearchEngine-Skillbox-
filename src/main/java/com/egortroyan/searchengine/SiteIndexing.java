@@ -78,7 +78,6 @@ public class SiteIndexing extends Thread{
             Page page = getSearchPage(searchUrl, site.getUrl(), site.getId());
             Page checkPage = pageRepositoryService.getPage(searchUrl.replaceAll(site.getUrl(), ""));
             if (checkPage != null){
-                //System.out.println("Такая страница уже есть в базе, чистим базу:\n" + searchUrl);
                 prepareDbToIndexing(checkPage);
             }
             TreeMap<String, Integer> map = new TreeMap<>();
@@ -115,9 +114,7 @@ public class SiteIndexing extends Thread{
 
 
     private void pageToDb(Page page) {
-        if(pageRepositoryService.getPage(page.getPath()) == null) {
             pageRepositoryService.save(page);
-        }
     }
 
     private Page getSearchPage(String url, String baseUrl, int siteId) throws IOException {
@@ -160,17 +157,17 @@ public class SiteIndexing extends Thread{
         for (Map.Entry<String, Integer> lemma : lemmaMap.entrySet()) {
             String lemmaName = lemma.getKey();
             List<Lemma> lemma1 = lemmaRepositoryService.getLemma(lemmaName);
-            if (lemma1.isEmpty()){
+            Lemma lemma2 = lemma1.stream().
+                    filter(lemma3 -> lemma3.getSiteId() == siteId).
+                    findFirst().
+                    orElse(null);
+            if (lemma2 == null){
                 Lemma newLemma = new Lemma(lemmaName, 1, siteId);
                 lemmaRepositoryService.save(newLemma);
             } else {
-                for(Lemma l : lemma1) {
-                    if (l.getSiteId() == siteId) {
-                        int count = l.getFrequency();
-                        l.setFrequency(++count);
-                        lemmaRepositoryService.save(l);
-                    }
-                }
+                        int count = lemma2.getFrequency();
+                        lemma2.setFrequency(++count);
+                        lemmaRepositoryService.save(lemma2);
             }
         }
     }

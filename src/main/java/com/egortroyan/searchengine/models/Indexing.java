@@ -46,4 +46,13 @@ public class Indexing {
     public void setRank(float rank) {
         this.ranking = rank;
     }
+
+    @Override
+    public String toString() {
+        return "Indexing{" +
+                "pageId=" + pageId +
+                ", lemmaId=" + lemmaId +
+                ", ranking=" + ranking +
+                '}';
+    }
 }

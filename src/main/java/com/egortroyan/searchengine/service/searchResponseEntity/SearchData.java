@@ -67,5 +67,15 @@ public class SearchData {
     public void setRelevance(double relevance) {
         this.relevance = relevance;
     }
+
+    @Override
+    public String toString() {
+        return "SearchData{" +
+                "uri='" + uri + '\'' +
+                ", title='" + title + '\'' +
+                ", snippet='" + snippet + '\'' +
+                ", relevance=" + relevance +
+                '}';
+    }
 }
 

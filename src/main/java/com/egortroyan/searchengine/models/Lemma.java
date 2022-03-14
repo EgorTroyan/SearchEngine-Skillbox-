@@ -55,4 +55,14 @@ public class Lemma {
     public void setSiteId(int siteId) {
         this.siteId = siteId;
     }
+
+    @Override
+    public String toString() {
+        return "Lemma{" +
+                "id=" + id +
+                ", lemma='" + lemma + '\'' +
+                ", frequency=" + frequency +
+                ", siteId=" + siteId +
+                '}';
+    }
 }
