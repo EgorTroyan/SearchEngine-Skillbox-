@@ -839,6 +839,11 @@
 .Tabs-block:after {
   clear: both;
 }
+.Tabs-block_update {
+  position: absolute;
+  left: -9999px;
+  display: block !important;
+}
 .Tabs .Tabs-block {
   padding-bottom: 0;
   overflow: visible;

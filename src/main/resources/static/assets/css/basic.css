@@ -1324,55 +1324,6 @@ label.toggle {
   line-height: 1.5em;
 }
 
-/*-----------  media  -----------*/
-.media {
-  display: flex;
-}
-.media_middle {
-  align-items: center;
-}
-.media-header {
-  display: block;
-  margin-bottom: 10px;
-}
-.media-title {
-  font-weight: bold;
-  font-size: 17px;
-  display: block;
-}
-.media-image {
-  display: block;
-  line-height: 0;
-}
-.media-content {
-  padding-left: 12px;
-  padding-right: 12px;
-  display: block;
-  flex-grow: 8;
-  flex-basis: 60px;
-  flex-shrink: 0;
-}
-.media-content:first-child {
-  padding-left: 0;
-}
-.media-content:last-child {
-  padding-right: 0;
-}
-.media_vt {
-  display: block;
-  text-align: center;
-}
-.media_vt .media-image {
-  margin-bottom: 10px;
-}
-.media_vt .media-content {
-  padding-left: 0;
-}
-.media_vt .media-header {
-  border-right: none;
-  padding-right: 0;
-}
-
 /*----------  Меню  ----------*/
 .menu {
   width: 100%;
@@ -1772,6 +1723,55 @@ label.toggle {
   padding: 0 8px 0px;
   letter-spacing: -0.5px;
   line-height: 35px;
+}
+
+/*-----------  media  -----------*/
+.media {
+  display: flex;
+}
+.media_middle {
+  align-items: center;
+}
+.media-header {
+  display: block;
+  margin-bottom: 10px;
+}
+.media-title {
+  font-weight: bold;
+  font-size: 17px;
+  display: block;
+}
+.media-image {
+  display: block;
+  line-height: 0;
+}
+.media-content {
+  padding-left: 12px;
+  padding-right: 12px;
+  display: block;
+  flex-grow: 8;
+  flex-basis: 60px;
+  flex-shrink: 0;
+}
+.media-content:first-child {
+  padding-left: 0;
+}
+.media-content:last-child {
+  padding-right: 0;
+}
+.media_vt {
+  display: block;
+  text-align: center;
+}
+.media_vt .media-image {
+  margin-bottom: 10px;
+}
+.media_vt .media-content {
+  padding-left: 0;
+}
+.media_vt .media-header {
+  border-right: none;
+  padding-right: 0;
 }
 
 /*-----------  Обертка картинки  -----------*/

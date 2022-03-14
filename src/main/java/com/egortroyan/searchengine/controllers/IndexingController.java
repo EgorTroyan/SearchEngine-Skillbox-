@@ -18,24 +18,21 @@ public class IndexingController {
         this.index = index;
     }
 
-    @GetMapping("/api/startIndexing")
+    @GetMapping("/startIndexing")
     public ResponseEntity<Object> startIndexingAll() {
-        //System.out.println("Starting indexing all");
         ResponseService response = index.startIndexingAll();
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/api/stopIndexing")
+    @GetMapping("/stopIndexing")
     public ResponseEntity<Object> stopIndexingAll() {
-        //System.out.println("Stop indexing all");
         ResponseService response = index.stopIndexing();
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/api/indexPage")
+    @PostMapping("/indexPage")
     public ResponseEntity<Object> startIndexingOne(
             @RequestParam(name="url", required=false, defaultValue=" ") String url) {
-        //System.out.println("Попытка запуска индексации отдельной страницы: " + url);
         ResponseService response = index.startIndexingOne(url);
         return ResponseEntity.ok(response);
     }
